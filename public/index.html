@@ -697,6 +697,7 @@
                 <div class="card" style="text-align:center; padding: 24px; border-top: 4px solid var(--primary);">
                     <h3 style="margin-bottom: 12px; color: var(--text-main);">Gerar Inventário Geral (XLSX)</h3>
                     <button class="btn-primary"
+                        onclick="window.location.href='/api/reports/inventory-export'"
                         style="background: white; border: 1px solid var(--border); color: var(--text-main);">Exportar
                         Base Oficial</button>
                 </div>
@@ -1716,7 +1717,8 @@
                         <td style="vertical-align:top;">${user.department || 'A Definir'}</td>
                         <td style="vertical-align:top;">${assetsHtml}</td>
                         <td style="vertical-align:top; text-align: right;">
-                            <button class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem; background: white; color: var(--text-main); border: 1px solid var(--border); box-shadow: none;" onclick="event.stopPropagation(); alert('Na próxima versão, este botão irá gerar o Termo de Posse legalmente exigido e em formato PDF ou disparo para o Jira para assinatura.')">
+                            <button class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem; background: white; color: var(--text-main); border: 1px solid var(--border); box-shadow: none;" 
+                                onclick="event.stopPropagation(); window.location.href='/api/reports/generate-term/' + '${user.id}'">
                                 📄 Gerar Termo
                             </button>
                         </td>

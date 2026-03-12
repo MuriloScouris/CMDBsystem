@@ -1,6 +1,10 @@
 const express = require('express');
 const { Pool } = require('pg');
 const axios = require('axios');
+const XLSX = require('xlsx');
+const { PDFDocument: PDFLibDoc, rgb: PDFLibRGB } = require('pdf-lib');
+const PDFKitDoc = require('pdfkit');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
@@ -303,7 +307,8 @@ app.get('/api/reports/user-assets', async (req, res) => {
                         json_build_object('id', a.id, 'tag', a.asset_tag, 'model', a.model, 'type', t.name)
                     ) FILTER (WHERE a.id IS NOT NULL), 
                     '[]'
-                ) as assets
+                ) as assets,
+                '/api/reports/generate-term/' || u.id as generate_term_url
             FROM users u
             LEFT JOIN inventory_assets a ON u.id = a.current_user_id
             LEFT JOIN asset_types t ON a.type_id = t.id
@@ -312,6 +317,130 @@ app.get('/api/reports/user-assets', async (req, res) => {
         `);
         res.json(result.rows);
     } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Exportação Completa para Excel
+app.get('/api/reports/inventory-export', async (req, res) => {
+    try {
+        const query = `
+            SELECT 
+                a.asset_tag as "Tag Patrimônio",
+                a.serial_number as "N/S",
+                t.name as "Tipo",
+                a.manufacturer as "Fabricante",
+                a.model as "Modelo",
+                a.status as "Status",
+                u.name as "Usuário Atual",
+                u.department as "Departamento",
+                TO_CHAR(a.purchase_date, 'DD/MM/YYYY') as "Data Compra",
+                TO_CHAR(a.warranty_expiry, 'DD/MM/YYYY') as "Venc. Garantia"
+            FROM inventory_assets a
+            LEFT JOIN users u ON a.current_user_id = u.id
+            LEFT JOIN asset_types t ON a.type_id = t.id
+            WHERE a.status != 'Deleted'
+            ORDER BY a.asset_tag ASC;
+        `;
+        const result = await pool.query(query);
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(result.rows);
+        XLSX.utils.book_append_sheet(wb, ws, "Inventário Geral");
+
+        const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=Inventario_Quanta_CMDB.xlsx');
+        res.send(buf);
+
+    } catch (err) {
+        console.error('Erro ao exportar Excel:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Geração de Termo de Posse do Zero (PDFKit) - Solução Robusta e Automatizada
+app.get('/api/reports/generate-term/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const userRes = await pool.query(`
+            SELECT u.*, 
+                   json_agg(json_build_object('tag', a.asset_tag, 'model', a.model, 'sn', a.serial_number, 'type', t.name)) as assets
+            FROM users u
+            LEFT JOIN inventory_assets a ON u.id = a.current_user_id
+            LEFT JOIN asset_types t ON a.type_id = t.id
+            WHERE u.id = $1
+            GROUP BY u.id
+        `, [userId]);
+
+        if (userRes.rowCount === 0) return res.status(404).send('Usuário não encontrado');
+        const user = userRes.rows[0];
+
+        const doc = new PDFKitDoc({ size: 'A4', margin: 50 });
+        const safeFileName = user.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="Termo_Posse_${safeFileName}.pdf"`);
+        doc.pipe(res);
+
+        // --- CABEÇALHO ---
+        doc.fillColor('#1b5f8c').fontSize(16).text('🚀 QUANTA CMDB - SISTEMA DE GESTÃO ITAM', { align: 'center' });
+        doc.moveDown(0.5);
+        doc.fillColor('#333').fontSize(12).text('DECLARAÇÃO DE RECEBIMENTO E RESPONSABILIDADE', { align: 'center', underline: true });
+        doc.moveDown(1.5);
+
+        // --- TEXTO LEGAL ---
+        doc.fontSize(10).fillColor('#000').text(`Declaro para os devidos fins que recebi da Quanta Previdência os equipamentos descritos abaixo, em perfeitas condições de uso, cedidos a título de empréstimo para uso exclusivo de fins de trabalho, comprometendo-me a zelarem por sua guarda e conservação.`, { align: 'justify' });
+        doc.moveDown();
+        doc.text(`Estou ciente das normas de segurança da informação e das políticas internas da empresa, assumindo total responsabilidade pelo uso, guarda e devolução dos mesmos.`);
+        doc.moveDown(1.5);
+
+        // --- TABELA DE EQUIPAMENTOS ---
+        const tableTop = 230;
+        doc.fillColor('#1b5f8c').fontSize(11).text('Item', 50, tableTop);
+        doc.text('Descrição / Modelo', 100, tableTop);
+        doc.text('Patrimônio', 350, tableTop);
+        doc.text('Nº de Série', 450, tableTop);
+        
+        doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).strokeColor('#ccc').stroke();
+
+        let rowY = tableTop + 25;
+        if (user.assets && Array.isArray(user.assets) && user.assets[0].tag) {
+            user.assets.forEach((asset, index) => {
+                doc.fillColor('#444').fontSize(10);
+                doc.text(index + 1, 50, rowY);
+                doc.text(`${asset.type} ${asset.model}`, 100, rowY, { width: 240 });
+                doc.text(asset.tag, 350, rowY);
+                doc.text(asset.sn || 'N/A', 450, rowY);
+                rowY += 25;
+            });
+        } else {
+            doc.font('Helvetica-Oblique').text('Nenhum equipamento vinculado a este usuário.', 100, rowY);
+            rowY += 25;
+        }
+
+        // --- RODAPÉ / ASSINATURAS ---
+        const footerY = 650;
+        doc.moveTo(50, footerY).lineTo(250, footerY).stroke();
+        doc.moveTo(330, footerY).lineTo(530, footerY).stroke();
+        
+        doc.fillColor('#000').fontSize(10);
+        doc.text('Assinatura do Colaborador', 50, footerY + 5, { width: 200, align: 'center' });
+        doc.text('TI / Infraestrutura (Quanta)', 330, footerY + 5, { width: 200, align: 'center' });
+
+        doc.moveDown(4);
+        doc.fillColor('#666').fontSize(9);
+        doc.text(`Colaborador: ${user.name}`, 50);
+        doc.text(`Departamento: ${user.department || 'TI'}`);
+        doc.text(`Matrícula: ${user.registration_number || '-'}`);
+        doc.text(`Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}`);
+
+        doc.end();
+
+    } catch (err) {
+        console.error('Erro ao gerar Termo PDF:', err);
         res.status(500).json({ error: err.message });
     }
 });
