@@ -1058,6 +1058,77 @@
         </div>
     </div>
 
+    <!-- Painel Lateral de Detalhe do Usuário -->
+    <div class="detail-panel" id="userPanel">
+        <div class="panel-header">
+            <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">COLABORADOR</div>
+                <h2 id="panel-user-name" style="margin: 4px 0 8px 0; font-size: 1.8rem;">---</h2>
+                <span id="panel-user-status" class="tag assigned">---</span>
+            </div>
+            <button class="close-btn" onclick="closeUserPanel()">×</button>
+        </div>
+
+        <div class="panel-body">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
+                <h3 style="margin:0">Dados Cadastrais</h3>
+                <button class="btn-primary" style="background: transparent; border: 1px solid var(--border); color: var(--text-main); font-size:0.85rem; padding: 6px 14px;" onclick="openEditUserModal()">✏️ Editar Dados</button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 32px;">
+                <div><span style="color: var(--text-muted); font-size:0.85rem">Departamento</span><br><strong id="user-detail-dept">-</strong></div>
+                <div><span style="color: var(--text-muted); font-size:0.85rem">E-mail</span><br><strong id="user-detail-email">-</strong></div>
+                <div><span style="color: var(--text-muted); font-size:0.85rem">Matrícula</span><br><strong id="user-detail-reg">-</strong></div>
+            </div>
+
+            <h3 style="margin-bottom: 16px; margin-top: 32px;">Equipamentos em Posse</h3>
+            <div id="user-assets-container" style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- Preenchido via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Usuário -->
+    <div class="modal-overlay" id="editUserModalOverlay">
+        <div class="modal">
+            <h2 style="margin-bottom:24px;">Editar Colaborador</h2>
+            <input type="hidden" id="edit-user-id">
+            
+            <div class="form-group">
+                <label class="form-label">Nome Completo</label>
+                <input type="text" id="edit-user-name" class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Departamento</label>
+                <input type="text" id="edit-user-dept" class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">E-mail Corporativo</label>
+                <input type="email" id="edit-user-email" class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Número de Matrícula</label>
+                <input type="text" id="edit-user-reg" class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Status no CMDB</label>
+                <select id="edit-user-status" class="form-input">
+                    <option value="Active">Ativo (Em posse / Contratado)</option>
+                    <option value="Terminated">Desligado (Inativo)</option>
+                </select>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:16px; margin-top:32px;">
+                <button class="btn-primary" style="background:transparent; color:var(--text-muted);" onclick="closeEditUserModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveUserEdit()">Confirmar Alterações</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Editar Especificações -->
     <div class="modal-overlay" id="editSpecsModalOverlay">
         <div class="modal">
@@ -1621,25 +1692,133 @@
             document.getElementById('add-model').innerHTML = opts;
         }
 
+        // Painel Lateral de Usuário
+        window.openUserPanel = function() { 
+            console.log('🔓 Abrindo painel de usuário');
+            document.getElementById('userPanel').classList.add('open'); 
+        };
+        window.closeUserPanel = function() { document.getElementById('userPanel').classList.remove('open'); };
+
+        window.loadUserDetails = async function(id) {
+            console.log('🕵️ Carregando detalhes do usuário ID:', id);
+            try {
+                const res = await fetch(`/api/users/${id}`);
+                const data = await res.json();
+                const user = data.user;
+                const assets = data.assets;
+
+                document.getElementById('panel-user-name').innerText = user.name;
+                document.getElementById('user-detail-dept').innerText = user.department || '-';
+                document.getElementById('user-detail-email').innerText = user.email || '-';
+                document.getElementById('user-detail-reg').innerText = user.registration_number || '-';
+                
+                const statusTag = document.getElementById('panel-user-status');
+                statusTag.className = user.status === 'Active' ? 'tag assigned' : 'tag terminated';
+                statusTag.innerText = user.status === 'Active' ? 'Ativo' : 'Desligado';
+
+                // Armazena ID para edição
+                document.getElementById('edit-user-id').value = user.id;
+
+                // Renderiza Ativos
+                const container = document.getElementById('user-assets-container');
+                if (assets.length === 0) {
+                    container.innerHTML = '<p style="color:var(--text-muted); font-style:italic;">Nenhum equipamento vinculado.</p>';
+                } else {
+                    container.innerHTML = assets.map(a => `
+                        <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight:600; text-transform: uppercase;">${a.type}</span><br>
+                                <strong style="color: var(--text-main);">${a.model}</strong>
+                            </div>
+                            <span class="tag stock">${a.asset_tag}</span>
+                        </div>
+                    `).join('');
+                }
+
+                window.openUserPanel();
+            } catch (err) {
+                console.error('Erro ao carregar detalhes do usuário:', err);
+            }
+        };
+
+        window.openEditUserModal = function() {
+            const id = document.getElementById('edit-user-id').value;
+            // Busca dados atuais do painel para o modal
+            document.getElementById('edit-user-name').value = document.getElementById('panel-user-name').innerText;
+            document.getElementById('edit-user-dept').value = document.getElementById('user-detail-dept').innerText;
+            document.getElementById('edit-user-email').value = document.getElementById('user-detail-email').innerText;
+            document.getElementById('edit-user-reg').value = document.getElementById('user-detail-reg').innerText;
+            
+            const currentStatus = document.getElementById('panel-user-status').innerText === 'Ativo' ? 'Active' : 'Terminated';
+            document.getElementById('edit-user-status').value = currentStatus;
+
+            document.getElementById('editUserModalOverlay').style.display = 'flex';
+        };
+
+        window.closeEditUserModal = function() {
+            document.getElementById('editUserModalOverlay').style.display = 'none';
+        };
+
+        window.saveUserEdit = async function() {
+            const id = document.getElementById('edit-user-id').value;
+            const payload = {
+                name: document.getElementById('edit-user-name').value,
+                department: document.getElementById('edit-user-dept').value,
+                email: document.getElementById('edit-user-email').value,
+                registration_number: document.getElementById('edit-user-reg').value,
+                status: document.getElementById('edit-user-status').value
+            };
+
+            try {
+                const res = await fetch(`/api/users/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    window.closeEditUserModal();
+                    window.loadUserDetails(id); // Atualiza o painel lateral
+                    loadUsersTable();    // Atualiza a tabela principal
+                }
+            } catch (err) {
+                console.error('Erro ao salvar usuário:', err);
+            }
+        };
+
         // Carrega Usuários do Banco e renderiza na Tela de RH
         async function loadUsersTable() {
+            console.log('📊 Carregando tabela de funcionários via DOM API...');
             try {
                 const tbody = document.getElementById('users-tbody');
                 const res = await fetch('/api/users');
                 const users = await res.json();
 
-                let html = '';
+                tbody.innerHTML = ''; // Limpa a tabela
+
                 users.forEach(u => {
+                    const tr = document.createElement('tr');
+                    tr.style.cursor = 'pointer';
+                    
                     let statusTag = u.status === 'Active' ? '<span class="tag assigned">Ativo</span>' : '<span class="tag terminated">Desligado</span>';
-                    html += `<tr>
+                    
+                    tr.innerHTML = `
                         <td style="color: var(--text-muted); font-family: monospace;">${u.registration_number || '-'}</td>
                         <td style="font-weight:600; color: var(--text-main);">${u.name}</td>
                         <td>${u.department || 'A Definir'}</td>
                         <td>${u.email || '-'}</td>
                         <td>${statusTag}</td>
-                    </tr>`;
+                    `;
+
+                    // Anexa o evento de clique de forma robusta
+                    tr.addEventListener('click', () => {
+                        console.log('🖱️ Clique detectado na linha do usuário:', u.name, '(ID:', u.id, ')');
+                        window.loadUserDetails(u.id);
+                    });
+
+                    tbody.appendChild(tr);
                 });
-                tbody.innerHTML = html;
+                console.log(`✅ Tabela renderizada com ${users.length} funcionários.`);
 
             } catch (err) {
                 console.error('Erro ao carregar Funcionários', err);

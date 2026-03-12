@@ -243,6 +243,46 @@ app.post('/api/users', async (req, res) => {
     }
 });
 
+app.get('/api/users/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userRes = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+        
+        if (userRes.rows.length === 0) return res.status(404).json({ error: 'User not found' });
+        
+        const assetsRes = await pool.query(`
+            SELECT a.id, a.asset_tag, a.model, t.name as type
+            FROM inventory_assets a
+            LEFT JOIN asset_types t ON a.type_id = t.id
+            WHERE a.current_user_id = $1 AND a.status != 'Deleted'
+        `, [id]);
+
+        res.json({
+            user: userRes.rows[0],
+            assets: assetsRes.rows
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/users/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, department, email, registration_number, status } = req.body;
+
+        await pool.query(`
+            UPDATE users 
+            SET name = $1, department = $2, email = $3, registration_number = $4, status = $5
+            WHERE id = $6
+        `, [name, department, email, registration_number, status || 'Active', id]);
+
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/api/asset-types', async (req, res) => {
     try {
         const result = await pool.query(`SELECT * FROM asset_types ORDER BY name ASC;`);
