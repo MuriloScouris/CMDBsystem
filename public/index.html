@@ -1,0 +1,2333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITAM - Portal de Gestão de Ativos</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-page: #f1f5f9;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --primary: #009fdf; /* Azul Claro da Logo */
+            --primary-hover: #0081b8; 
+            --border: #e2e8f0;
+            --success: #b2d235; /* Verde da Logo para o Success */
+            --warning: #f59e0b;
+            --danger: #dc2626;
+            --quanta-blue: #009fdf; /* Azul Claro */
+            --quanta-dark-blue: #1b5f8c; /* Azul Escuro da Logo */
+            --quanta-green: #b2d235; /* Verde Quanta */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 260px;
+            background-color: var(--quanta-dark-blue);
+            color: #ffffff;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            box-shadow: 4px 0 16px rgba(0, 52, 107, 0.15);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-link {
+            padding: 12px 16px;
+            border-radius: 999px;
+            color: rgba(255, 255, 255, 0.75);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background-color: var(--quanta-green); /* Verde de destaque */
+            color: #1b5f8c; /* Texto Azul escuro no fundo verde para contraste */
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(178, 210, 53, 0.4); /* Sombra Verde */
+            transform: translateX(4px); /* Animação sutil */
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .search-bar {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .search-bar input {
+            padding: 10px 36px 10px 20px;
+            border-radius: 999px; /* Arredondado moderno */
+            border: 1px solid var(--border);
+            width: 400px;
+            font-size: 0.95rem;
+            outline: none;
+            box-shadow: 0 2px 10px rgba(0, 52, 107, 0.05); /* Sombra suave da logo Azul */
+            transition: all 0.2s;
+        }
+
+        .search-bar input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 159, 223, 0.2); /* Foco Azul Quanta */
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1rem;
+            display: none; /* Escondido por padrão, aparece via JS quando há texto */
+            justify-content: center;
+            align-items: center;
+            padding: 4px;
+            border-radius: 50%;
+        }
+        
+        .search-clear:hover {
+            color: var(--danger);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 999px; /* Botões arredondados modernos */
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 159, 223, 0.3); /* Sombra azul clara */
+            transition: all 0.2s ease-in-out;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 159, 223, 0.4);
+        }
+
+        /* Dashboards Cards */
+        .dash-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: none; /* Sem borda, estilo flat/moderno */
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(27, 95, 140, 0.08); /* Sombra Quanta Dark Blue */
+            transition: transform 0.2s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(27, 95, 140, 0.12);
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-top: 8px;
+        }
+
+        /* Data Table */
+        .table-container {
+            background: var(--bg-card);
+            border: none;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(27, 95, 140, 0.08);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th,
+        td {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        tr:hover {
+            background-color: #f0f9ff; /* Azul ultraleve no hover da tabela */
+            cursor: pointer;
+        }
+
+        .tag {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .tag.assigned {
+            background: #eef7ca; /* Fundo esverdeado inspirado na marca */
+            color: #4d610c; 
+        }
+
+        .tag.stock {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .tag.broken {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .tag.terminated {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fbbf24;
+        }
+
+        /* Side Panel (Modal) */
+        .detail-panel {
+            position: fixed;
+            top: 0;
+            right: -600px;
+            width: 600px;
+            height: 100vh;
+            background: white;
+            box-shadow: -4px 0 32px rgba(27, 95, 140, 0.15); /* Sombra suave para o Azul Escuro Quanta */
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Animação mais clean */
+            display: flex;
+            flex-direction: column;
+            z-index: 300;
+        }
+
+        .detail-panel.open {
+            right: 0;
+        }
+
+        .panel-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .panel-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .close-btn {
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: none;
+            background: none;
+        }
+
+        /* Modal Overlay for Add Form */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+
+        .modal {
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            width: 450px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 0.9rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        /* Abas no Painel */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Linha do Tempo (Historico) */
+        .timeline {
+            border-left: 2px solid var(--border);
+            margin-left: 12px;
+            padding-left: 24px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -31px;
+            top: 4px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+
+        .time-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .time-desc {
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .time-sub {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Multi-Page Logic */
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Mind Map Tree Styles */
+        .tree ul {
+            padding-top: 20px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            padding-left: 0;
+        }
+
+        .tree li {
+            float: left;
+            text-align: center;
+            list-style-type: none;
+            position: relative;
+            padding: 20px 10px 0 10px;
+        }
+
+        .tree li::before,
+        .tree li::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 50%;
+            border-top: 2px solid #cbd5e1;
+            width: 50%;
+            height: 20px;
+        }
+
+        .tree li::after {
+            right: auto;
+            left: 50%;
+            border-left: 2px solid #cbd5e1;
+        }
+
+        .tree li:only-child::after,
+        .tree li:only-child::before {
+            display: none;
+        }
+
+        .tree li:only-child {
+            padding-top: 0;
+        }
+
+        .tree li:first-child::before,
+        .tree li:last-child::after {
+            border: 0 none;
+        }
+
+        .tree li:last-child::before {
+            border-right: 2px solid #cbd5e1;
+            border-radius: 0 8px 0 0;
+        }
+
+        .tree li:first-child::after {
+            border-radius: 8px 0 0 0;
+        }
+
+        .tree ul ul::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            border-left: 2px solid #cbd5e1;
+            width: 0;
+            height: 20px;
+        }
+
+        .tree a {
+            border: 1px solid var(--border);
+            padding: 16px;
+            text-decoration: none;
+            color: var(--text-main);
+            display: inline-block;
+            border-radius: 12px;
+            transition: all 0.3s;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            min-width: 150px;
+            position: relative;
+            z-index: 5;
+        }
+
+        .tree a.root-node {
+            background: var(--primary);
+            color: white;
+            border: none;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
+            font-size: 1.1rem;
+            padding: 20px 32px;
+            min-width: 200px;
+        }
+
+        .tree a:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <span style="font-size: 1.8rem; margin-right: 8px;">🚀</span> Quanta CMDB
+        </div>
+        <div style="flex-direction: column; display: flex; gap: 8px;">
+            <div class="nav-link active" onclick="switchMainView('hardware', this)">Inventário Físico</div>
+
+            <!-- Dynamic Submenu loaded via JS -->
+            <div id="hardware-submenu"
+                style="display:flex; flex-direction:column; gap:4px; padding-left:16px; margin-bottom:8px"></div>
+
+            <div class="nav-link" onclick="switchMainView('software', this)">Licenças de Software</div>
+            <div class="nav-link" onclick="switchMainView('users', this)">Funcionários</div>
+            <div class="nav-link" onclick="switchMainView('reports', this)">Relatórios Gerenciais</div>
+            <div class="nav-link" onclick="switchMainView('deleted', this)">Máquinas Excluídas</div>
+            <div class="nav-link" onclick="switchMainView('models', this)">Modelos e Padrões</div>
+
+            <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.2); margin: 16px 0;">
+            <div id="jira-sync-btn" class="nav-link" onclick="openJiraSyncModal()"
+                style="display:flex; justify-content:space-between; background:var(--primary); color:white; font-weight: 600;">
+                <span>☁️ Sincronizar Jira</span>
+                <span id="jira-queue-count">(0)</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Principal -->
+    <div class="main-content">
+
+        <!-- ======================= -->
+        <!-- VIEW: INVENTARIO FÍSICO -->
+        <!-- ======================= -->
+        <div id="view-hardware" class="view-section active">
+            <div class="header">
+                <div>
+                    <h1 style="font-size: 1.5rem; margin-bottom: 8px;">Equipamentos e Ativos</h1>
+                    <p style="color: var(--text-muted)">Gerencie notebooks, desktops e periféricos da empresa.</p>
+                </div>
+                <div style="display: flex; gap: 16px;">
+                    <div class="search-bar">
+                        <!-- Busca Funcional -->
+                        <input type="text" id="search-input" oninput="filterAssets()"
+                            placeholder="Buscar Patrimônio, Usuário, Modelo ou Status...">
+                        <button id="search-clear-btn" class="search-clear" onclick="clearSearch()" title="Limpar busca">&times;</button>
+                    </div>
+                    <button class="btn-primary" onclick="openAddModal()">+ Cadastrar Máquina</button>
+                </div>
+            </div>
+
+            <div class="dash-cards">
+                <div class="card">
+                    <div class="card-title" id="stat-total-label">Total de Equipamentos</div>
+                    <div class="card-value" id="stat-total">...</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Em Estoque (Prontos)</div>
+                    <div class="card-value" id="stat-stock" style="color: var(--success)">...</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Na Assistência</div>
+                    <div class="card-value" id="stat-maint" style="color: var(--warning)">...</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Perdidos / Furtados</div>
+                    <div class="card-value" id="stat-lost" style="color: var(--danger)">...</div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Patrimônio</th>
+                            <th>Modelo Regulatório</th>
+                            <th>Usuário Atual</th>
+                            <th>Departamento</th>
+                            <th>Status Operacional</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assets-tbody">
+                        <tr>
+                            <td colspan="5" style="text-align:center;color:#64748b">Carregando dados reais do
+                                PostgreSQL...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ======================= -->
+        <!-- VIEW: LICENÇAS -->
+        <!-- ======================= -->
+        <div id="view-software" class="view-section">
+            <div class="header">
+                <div>
+                    <h1 style="font-size: 1.5rem; margin-bottom: 8px;">Licenças de Software</h1>
+                    <p style="color: var(--text-muted)">Controle de softwares corporativos e assinaturas Cloud.</p>
+                </div>
+                <button class="btn-primary" onclick="openLicenseModal()">+ Cadastrar Licença</button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Software / Serviço</th>
+                            <th>Chave de Ativação / Conta</th>
+                            <th>Custo Mensal (BRL)</th>
+                            <th>Atribuído A</th>
+                        </tr>
+                    </thead>
+                    <tbody id="licenses-tbody">
+                        <tr>
+                            <td colspan="4" style="text-align:center;color:#64748b">Carregando licenças...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ======================= -->
+        <!-- VIEW: USUÁRIOS (FUNCIONÁRIOS) -->
+        <!-- ======================= -->
+        <div id="view-users" class="view-section">
+            <div class="header">
+                <div>
+                    <h1 style="font-size: 1.5rem; margin-bottom: 8px;">Diretório de Funcionários</h1>
+                    <p style="color: var(--text-muted)">Consulte a base de Colaboradores.</p>
+                </div>
+                <!-- Busca de usuários (Visual) -->
+                <div style="display: flex; gap: 16px;">
+                    <button class="btn-primary" onclick="openUserModal()">+ Novo Funcionário</button>
+                    <div class="search-bar">
+                        <input type="text" placeholder="Buscar Colaborador...">
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Matrícula</th>
+                            <th>Nome do Funcionário</th>
+                            <th>Departamento / Setor</th>
+                            <th>Email Corporativo</th>
+                            <th>Status no RH</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-tbody">
+                        <tr>
+                            <td colspan="4" style="text-align:center;color:#64748b">Carregando usuários...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ======================= -->
+        <!-- VIEW: RELATÓRIOS (GRADE RELACIONAL) -->
+        <!-- ======================= -->
+        <div id="view-reports" class="view-section">
+            <div class="header">
+                <div>
+                    <h1 style="font-size: 1.5rem; margin-bottom: 8px;">Relatórios Gerenciais e Auditoria</h1>
+                    <p style="color: var(--text-muted)">Grade relacional e visão consolidada de posses.</p>
+                </div>
+            </div>
+            <div class="dash-cards" style="grid-template-columns: repeat(2, 1fr);">
+                <div class="card" style="text-align:center; padding: 24px; border-top: 4px solid var(--primary);">
+                    <h3 style="margin-bottom: 12px; color: var(--text-main);">Gerar Inventário Geral (XLSX)</h3>
+                    <button class="btn-primary"
+                        style="background: white; border: 1px solid var(--border); color: var(--text-main);">Exportar
+                        Base Oficial</button>
+                </div>
+                <div class="card" style="text-align:center; padding: 24px; border-top: 4px solid var(--success);">
+                    <h3 style="margin-bottom: 12px; color: var(--text-main);">Termos de Devolução (CSV)</h3>
+                    <button class="btn-primary"
+                        style="background: white; border: 1px solid var(--border); color: var(--text-main);">Exportar
+                        Assinaturas</button>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom: 16px; margin-top: 32px;">Matriz: Colaboradores vs. Equipamentos em Posse</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Colaborador</th>
+                            <th>Departamento / Setor</th>
+                            <th>Equipamentos Acautelados (Em Posse)</th>
+                            <th style="text-align: right;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reports-users-tbody">
+                        <tr>
+                            <td colspan="4" style="text-align:center;color:#64748b;padding: 32px;">Carregando Matriz
+                                Relacional...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ======================= -->
+        <!-- VIEW: MODELOS E PADRÕES -->
+        <!-- ======================= -->
+        <div id="view-models" class="view-section">
+            <div class="header">
+                <div>
+                    <h1 style="font-size: 1.5rem; margin-bottom: 8px;">Modelos Padrões (Catálogo)</h1>
+                    <p style="color: var(--text-muted)">Padronize fabricantes, processadores, e dados técnicos de
+                        hardware.</p>
+                </div>
+                <button class="btn-primary" onclick="openModelModal()">+ Novo Modelo</button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fabricante</th>
+                            <th>Nome do Modelo</th>
+                            <th>Processador</th>
+                            <th>Memória RAM</th>
+                            <th>Armazenamento</th>
+                        </tr>
+                    </thead>
+                    <tbody id="models-tbody">
+                        <tr>
+                            <td colspan="5" style="text-align:center;color:#64748b;padding: 32px;">Carregando modelos...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ======================= -->
+        <!-- VIEW: MÁQUINAS EXCLUÍDAS -->
+        <!-- ======================= -->
+        <div id="view-deleted" class="view-section">
+            <div class="header">
+                <div>
+                    <h1 style="font-size: 1.5rem; margin-bottom: 8px;">Máquinas Excluídas</h1>
+                    <p style="color: var(--text-muted)">Registro de equipamentos descartados, vendidos ou doados.</p>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Patrimônio</th>
+                            <th>Fabricante e Modelo</th>
+                            <th>Data da Exclusão</th>
+                            <th>Motivo / Justificativa</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="deleted-assets-tbody">
+                        <tr>
+                            <td colspan="4" style="text-align:center;color:#64748b;padding: 32px;">Carregando
+                                histórico...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal Novo Cadastro -->
+    <div class="modal-overlay" id="addModalOverlay">
+        <div class="modal">
+            <h2 style="margin-bottom: 24px;">Cadastrar Novo Equipamento</h2>
+            <div class="form-group">
+                <label class="form-label">Categoria do Equipamento</label>
+                <select id="add-type" class="form-input"></select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Patrimônio (Tag)</label>
+                <input type="text" id="add-tag" class="form-input" placeholder="Ex: NB-TI-099">
+            </div>
+            <div class="form-group" style="display:flex; gap: 16px;">
+                <div style="flex:1">
+                    <label class="form-label">Fabricante</label>
+                    <select id="add-manuf" class="form-input" onchange="filterAddModels()">
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                <div style="flex:1">
+                    <label class="form-label">Modelo Principal</label>
+                    <select id="add-model" class="form-input">
+                        <option value="">Selecione o Fabricante primeiro</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group" style="display:flex; gap: 16px;">
+                <div style="flex:1">
+                    <label class="form-label">Estado Inicial</label>
+                    <select id="add-status" class="form-input" onchange="toggleOwnerSelect()">
+                        <option value="In_Stock">No Estoque (Almoxarifado)</option>
+                        <option value="Assigned">Já Entregue a Usuário</option>
+                        <option value="Maintenance">Em Manutenção</option>
+                    </select>
+                </div>
+                <div style="flex:1">
+                    <label class="form-label">Proprietário</label>
+                    <select id="add-user" class="form-input" disabled>
+                        <option value="">-- Estoque da T.I --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content: flex-end; gap: 16px; margin-top: 32px;">
+                <button class="btn-primary" style="background:transparent; color: var(--text-muted);"
+                    onclick="closeAddModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveNewAsset()">Salvar Equipamento</button>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    </div>
+
+    <!-- Modal Novo Modelo(Catálogo) -->
+    <div class="modal-overlay" id="addModelModalOverlay">
+        <div class="modal">
+            <h2 style="margin-bottom: 24px;">Cadastrar Modelo Padrão</h2>
+            <div class="form-group" style="display:flex; gap: 16px;">
+                <div style="flex:1">
+                    <label class="form-label">Fabricante</label>
+                    <input type="text" id="new-model-manuf" class="form-input" placeholder="Ex: Dell, Apple">
+                </div>
+                <div style="flex:1">
+                    <label class="form-label">Nome do Modelo</label>
+                    <input type="text" id="new-model-name" class="form-input" placeholder="Ex: Latitude 5430">
+                </div>
+            </div>
+            <div class="form-group" style="display:flex; gap: 16px;">
+                <div style="flex:1">
+                    <label class="form-label">Processador (CPU)</label>
+                    <input type="text" id="new-model-cpu" class="form-input" placeholder="Ex: Core i5 12th">
+                </div>
+                <div style="flex:1">
+                    <label class="form-label">Memória RAM</label>
+                    <input type="text" id="new-model-ram" class="form-input" placeholder="Ex: 16GB">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Armazenamento (SSD/HD)</label>
+                <input type="text" id="new-model-storage" class="form-input" placeholder="Ex: 512GB NVMe">
+            </div>
+            <div style="display:flex; justify-content: flex-end; gap: 16px; margin-top: 32px;">
+                <button class="btn-primary" style="background:transparent; color: var(--text-muted);"
+                    onclick="closeModelModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveNewStandardModel()">Criar Modelo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Novo Usuário (RH) -->
+    <div class="modal-overlay" id="addUserModalOverlay">
+        <div class="modal">
+            <h2 style="margin-bottom: 24px;">Cadastrar Funcionário</h2>
+            <div class="form-group" style="display:flex; gap: 16px;">
+                <div style="flex:1">
+                    <label class="form-label">Nome Completo</label>
+                    <input type="text" id="new-user-name" class="form-input" placeholder="Ex: João da Silva">
+                </div>
+                <div style="flex:1">
+                    <label class="form-label">Matrícula</label>
+                    <input type="text" id="new-user-reg" class="form-input" placeholder="Ex: 10293">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">E-mail Corporativo</label>
+                <input type="email" id="new-user-email" class="form-input" placeholder="Ex: joao.silva@empresa.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Departamento / Setor</label>
+                <input type="text" id="new-user-dept" class="form-input" placeholder="Ex: Financeiro, TI, RH">
+            </div>
+            <div style="display:flex; justify-content: flex-end; gap: 16px; margin-top: 32px;">
+                <button class="btn-primary" style="background:transparent; color: var(--text-muted);"
+                    onclick="closeUserModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveNewUser()">Salvar Cadastro</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Mapa Mental -->
+    <div class="modal-overlay" id="mindMapModalOverlay">
+        <div class="modal"
+            style="width: 90vw; max-width: 1000px; max-height: 90vh; overflow-y: auto; background: #f8fafc;">
+            <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 32px;">
+                <h2>Mapa Estrutural de Responsabilidade</h2>
+                <button class="close-btn" onclick="closeMindMap()">×</button>
+            </div>
+
+            <div class="tree" id="mindmap-container"
+                style="display:flex; justify-content:center; min-height: 400px; align-items: flex-start; padding: 20px;">
+                <!-- Dinâmico -->
+            </div>
+
+            <div style="display:flex; justify-content: flex-end; margin-top: 32px;">
+                <button class="btn-primary"
+                    style="background:transparent; color: var(--text-muted); border: 1px solid var(--border)"
+                    onclick="closeMindMap()">Fechar Mapa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cadastrar Licença -->
+    <div class="modal-overlay" id="addLicenseModalOverlay">
+        <div class="modal">
+            <h2 style="margin-bottom: 24px;">Cadastrar Licença</h2>
+            <div class="form-group">
+                <label class="form-label">Nome do Software / Serviço</label>
+                <input type="text" id="new-license-name" class="form-input"
+                    placeholder="Ex: Office 365, Adobe Premiere">
+            </div>
+            <div class="form-group" style="display:flex; gap: 16px;">
+                <div style="flex:1">
+                    <label class="form-label">Chave de Ativação / Conta (Opcional)</label>
+                    <input type="text" id="new-license-key" class="form-input" placeholder="Ex: A1B2-C3D4...">
+                </div>
+                <div style="flex:1">
+                    <label class="form-label">Custo Mensal Estimado (R$)</label>
+                    <input type="number" step="0.01" id="new-license-cost" class="form-input" placeholder="Ex: 59.90">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Atribuir a um Funcionário (Opcional)</label>
+                <select id="new-license-user" class="form-input">
+                    <option value="">-- Licença Corporativa / Pool --</option>
+                </select>
+            </div>
+            <div style="display:flex; justify-content: flex-end; gap: 16px; margin-top: 32px;">
+                <button class="btn-primary" style="background:transparent; color: var(--text-muted);"
+                    onclick="closeLicenseModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveNewLicense()">Salvar Cadastro</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nova Categoria -->
+    <div class="modal-overlay" id="addTypeModalOverlay">
+        <div class="modal" style="width: 350px;">
+            <h2 style="margin-bottom: 24px;">Nova Categoria</h2>
+            <div class="form-group">
+                <label class="form-label">Nome da Categoria</label>
+                <input type="text" id="add-type-name" class="form-input" placeholder="Ex: Smartphone">
+            </div>
+            <div style="display:flex; justify-content: flex-end; gap: 16px; margin-top: 32px;">
+                <button class="btn-primary" style="background:transparent; color: var(--text-muted);"
+                    onclick="closeAddTypeModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveNewType()">Criar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Painel Lateral de Detalhe -->
+    <div class="detail-panel" id="assetPanel">
+        <div class="panel-header">
+            <div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">NOTEBOOK</div>
+                <h2 id="panel-asset-tag" style="margin: 4px 0 8px 0; font-size: 1.8rem;">---</h2>
+                <span id="panel-assigned-to" class="tag assigned">---</span>
+            </div>
+            <button class="close-btn" onclick="closePanel()">×</button>
+        </div>
+
+        <div class="panel-body">
+            <div class="tabs">
+                <div class="tab" id="tab-specs" onclick="switchTab('specs')">Detalhes Físicos</div>
+                <div class="tab active" id="tab-history" onclick="switchTab('history')">Histórico de Uso</div>
+                <div class="tab" id="tab-issues" onclick="switchTab('issues')">Chamados T.I</div>
+            </div>
+
+            <!-- Identificador fantasma para o botão de devolver -->
+            <input type="hidden" id="current-detail-id">
+
+            <div id="content-specs" class="hidden">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+                    <h3>Especificações da Máquina</h3>
+                    <button class="btn-primary" style="background: transparent; border: 1px solid var(--border); color: var(--text-main); font-size:0.85rem; padding: 6px 14px;" onclick="openSpecsModal()">✏️ Editar</button>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px;">
+                    <div><span style="color: var(--text-muted); font-size:0.85rem">Número de Série</span><br><strong
+                            id="spec-serial">-</strong></div>
+                    <div><span style="color: var(--text-muted); font-size:0.85rem">Modelo</span><br><strong
+                            id="spec-model">-</strong></div>
+                    <div><span style="color: var(--text-muted); font-size:0.85rem">Processador</span><br><strong
+                            id="spec-cpu">-</strong></div>
+                    <div><span style="color: var(--text-muted); font-size:0.85rem">Memória RAM</span><br><strong
+                            id="spec-ram">-</strong></div>
+                    <div><span style="color: var(--text-muted); font-size:0.85rem">Armazenamento
+                            HD/SSD</span><br><strong id="spec-storage">-</strong></div>
+                </div>
+
+                <h3 style="margin-bottom: 16px; margin-top: 32px;">Ações Administrativas</h3>
+                <div style="display:flex; flex-direction:column; gap:12px">
+                    <button class="btn-primary" style="background: var(--primary); color: white;"
+                        onclick="openTransferModal()">
+                        🔄 Movimentação / Trocar Usuário
+                    </button>
+                    <button class="btn-primary" style="background: #f59e0b; color: white;"
+                        onclick="openMaintenanceModal()">
+                        ⚠️ Abrir Chamado de Manutenção
+                    </button>
+                    <button id="btn-reclaim" class="btn-primary"
+                        style="background:#f1f5f9; color:var(--text-main); border: 1px solid var(--border);"
+                        onclick="openReturnModal()">📥 Devolver máquina para Estoque</button>
+
+                    <button class="btn-primary" style="background: #ef4444; color: white; margin-top: 8px;"
+                        onclick="openDeleteModal()">🗑️ Excluir Máquina do Inventário</button>
+                </div>
+            </div>
+
+            <div id="content-history">
+                <div class="timeline" id="history-timeline"></div>
+            </div>
+
+            <div id="content-issues" class="hidden">
+                <div id="maintenance-logs-container"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal Editar Especificações -->
+    <div class="modal-overlay" id="editSpecsModalOverlay">
+        <div class="modal">
+            <h2 style="margin-bottom:24px;">Editar Especificações</h2>
+
+            <div class="form-group" style="display:flex; gap:16px;">
+                <div style="flex:1">
+                    <label class="form-label">Fabricante</label>
+                    <input type="text" id="edit-manufacturer" class="form-input" placeholder="Ex: Dell">
+                </div>
+                <div style="flex:1">
+                    <label class="form-label">Modelo</label>
+                    <input type="text" id="edit-model" class="form-input" placeholder="Ex: Latitude 5430">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Número de Série</label>
+                <input type="text" id="edit-serial" class="form-input" placeholder="Ex: 4XRTB12">
+            </div>
+
+            <div class="form-group" style="display:flex; gap:16px;">
+                <div style="flex:1">
+                    <label class="form-label">Processador (CPU)</label>
+                    <input type="text" id="edit-cpu" class="form-input" placeholder="Ex: Intel i5-12th">
+                </div>
+                <div style="flex:1">
+                    <label class="form-label">Memória RAM</label>
+                    <input type="text" id="edit-ram" class="form-input" placeholder="Ex: 16GB">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Armazenamento (SSD/HD)</label>
+                <input type="text" id="edit-storage" class="form-input" placeholder="Ex: 512GB NVMe">
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:16px; margin-top:32px;">
+                <button class="btn-primary" style="background:transparent; color:var(--text-muted);" onclick="closeSpecsModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveSpecs()">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Resolver Chamado de Manutenção -->
+    <div class="modal-overlay" id="resolveModalOverlay">
+        <div class="modal">
+            <h2 style="margin-bottom:24px;">✅ Resolver Chamado</h2>
+
+            <div class="form-group">
+                <label class="form-label">O que foi feito? (Resolução)</label>
+                <textarea id="resolve-notes" class="form-input" rows="4"
+                    placeholder="Descreva o que foi feito para resolver o problema..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Novo Status Operacional do Equipamento</label>
+                <select id="resolve-new-status" class="form-input">
+                    <option value="In_Stock">Retornou ao Estoque (Almoxarifado)</option>
+                    <option value="Assigned">Devolvido ao Usuário (Em Uso)</option>
+                    <option value="Maintenance">Permanece em Manutenção</option>
+                </select>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:16px; margin-top:32px;">
+                <button class="btn-primary" style="background:transparent; color:var(--text-muted);" onclick="closeResolveModal()">Cancelar</button>
+                <button class="btn-primary" style="background:#16a34a;" onclick="saveResolve()">✅ Confirmar Resolução</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Transferência -->
+
+    <div class="modal-overlay" id="transferModalOverlay">
+        <div class="modal">
+            <h2 style="margin-bottom:24px;">Transferir / Alterar Status</h2>
+
+            <div class="form-group">
+                <label class="form-label">Novo Status</label>
+                <select id="transfer-status" class="form-input" onchange="toggleTransferOwner()">
+                    <option value="In_Stock">No Estoque (Almoxarifado)</option>
+                    <option value="Assigned">Já Entregue a Usuário</option>
+                    <option value="Lost">Perdido / Furtado</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Novo Proprietário</label>
+                <select id="transfer-user" class="form-input" disabled>
+                    <option value="">-- Estoque da T.I --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Número do Chamado (opcional)</label>
+                <input type="text" id="transfer-ticket" class="form-input" placeholder="Ex: INC-39281">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Justificativa (obrigatório)</label>
+                <textarea id="transfer-justification" class="form-input" rows="3"
+                    placeholder="Ex: Troca por upgrade de máquina ou saída de colaborador..."></textarea>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:16px; margin-top:32px;">
+                <button class="btn-primary" style="background:transparent; color:var(--text-muted);"
+                    onclick="closeTransferModal()">Cancelar</button>
+                <button class="btn-primary" onclick="saveTransfer()">Confirmar Transferência</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Manutenção -->
+    <div class="modal-overlay" id="maintenanceModalOverlay">
+        <div class="modal">
+            <h2 style="margin-bottom:24px;">Abrir Chamado de Manutenção</h2>
+
+            <div class="form-group">
+                <label class="form-label">Tipo do Problema</label>
+                <select id="maint-issue-type" class="form-input">
+                    <option value="Hardware Failure">Falha de Hardware (Quebra/Defeito)</option>
+                    <option value="Software Issue">Problema de Software / SO</option>
+                    <option value="Upgrade">Melhoria / Upgrade de Peça</option>
+                    <option value="Routine Check">Revisão de Rotina</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Número do Chamado Vinculado (opcional)</label>
+                <input type="text" id="maint-ticket" class="form-input" placeholder="Ex: TKT-1029">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Descrição do Problema (Obrigatório)</label>
+                <textarea id="maint-description" class="form-input" rows="4"
+                    placeholder="Descreva o que aconteceu com o equipamento (ex: Tela trincada, bateria não segura carga...)"></textarea>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:16px; margin-top:32px;">
+                <button class="btn-primary" style="background:transparent; color:var(--text-muted);"
+                    onclick="closeMaintenanceModal()">Cancelar</button>
+                <button class="btn-primary" style="background: #f59e0b; color: white;"
+                    onclick="saveMaintenance()">Enviar p/ Assistência</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Devolução para Estoque -->
+    <div class="modal-overlay" id="returnModalOverlay">
+        <div class="modal">
+            <h2 style="margin-bottom:12px;">Desvincular e Devolver</h2>
+            <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:24px;">
+                O equipamento será baixado e o termo de posse do funcionário será encerrado.
+            </p>
+
+            <div class="form-group">
+                <label class="form-label">Justificativa da Devolução (obrigatório)</label>
+                <textarea id="return-justification" class="form-input" rows="4"
+                    placeholder="Ex: Desligamento, Troca de ciclo, etc..."></textarea>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:16px; margin-top:32px;">
+                <button class="btn-primary" style="background:transparent; color:var(--text-muted);"
+                    onclick="closeReturnModal()">Cancelar</button>
+                <button class="btn-primary" style="background: var(--text-main); color: white;"
+                    onclick="returnAsset()">Confirmar Devolução</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Exclusão de Máquina -->
+    <div class="modal-overlay" id="deleteModalOverlay">
+        <div class="modal">
+            <h2 style="margin-bottom:12px; color: #ef4444;">Excluir Equipamento</h2>
+            <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:24px;">
+                Esta ação marcará a máquina como excluída e ela não aparecerá mais no inventário. O histórico será
+                mantido para auditoria.
+            </p>
+
+            <div class="form-group">
+                <label class="form-label">Justificativa da Exclusão (obrigatório)</label>
+                <textarea id="delete-justification" class="form-input" rows="4"
+                    placeholder="Ex: Equipamento obsoleto, descarte ecológico, venda..."></textarea>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:16px; margin-top:32px;">
+                <button class="btn-primary" style="background:transparent; color:var(--text-muted);"
+                    onclick="closeDeleteModal()">Cancelar</button>
+                <button class="btn-primary" style="background: #ef4444; color: white;" onclick="deleteAsset()">Confirmar
+                    Exclusão</button>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Modal Jira Sync -->
+    <div class="modal-overlay" id="jiraSyncModalOverlay">
+        <div class="modal" style="width: 500px;">
+            <h2 style="margin-bottom: 24px;">☁️ Sincronizar Fila do Jira</h2>
+            <p style="margin-bottom: 16px; color: var(--text-main)">
+                Você tem <strong id="jira-queue-modal-count" style="color: var(--primary);">0</strong> chamados
+                aguardando criação.
+            </p>
+            <p style="margin-bottom: 24px; font-size: 0.95rem; line-height: 1.5; color: var(--text-muted);">
+                A integração com a Atlassian está configurada e ativa.<br>
+                Ao clicar em Sincronizar, o sistema abrirá automaticamente os tickets na fila no formato de Tarefa do Jira.
+            </p>
+            <div style="display:flex; justify-content: flex-end; gap: 16px;">
+                <button class="btn-primary" style="background:transparent; color:var(--text-muted);"
+                    onclick="closeJiraSyncModal()">Cancelar</button>
+                <button class="btn-primary" onclick="syncJira()" style="background:#0052cc;">Sincronizar Agora</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Memória para busca Rápida
+        let globalAssets = [];
+        let globalStandardModels = [];
+        let globalReportsData = [];
+
+        // Funcionalidade de Menu
+        function switchMainView(viewId, triggerElement) {
+            // Remove active clásss dos botões principais
+            document.querySelectorAll('.sidebar > div > .nav-link').forEach(n => n.classList.remove('active'));
+            if (triggerElement) triggerElement.classList.add('active');
+
+            // Esconde todas as sub-páginas e mostra a correta
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+
+            // Mostra ou esconde o submenu de categorias dependendo da tela atual
+            const submenu = document.getElementById('hardware-submenu');
+            if (viewId === 'hardware') {
+                submenu.style.display = 'flex';
+            } else {
+                submenu.style.display = 'none';
+            }
+
+            // Carrega os dados sob demanda
+            if (viewId === 'users') {
+                loadUsersTable();
+            }
+            if (viewId === 'reports') {
+                loadReportsGrid();
+            }
+            if (viewId === 'deleted') {
+                loadDeletedAssets();
+            }
+            if (viewId === 'models') {
+                loadModelsTable();
+            }
+            if (viewId === 'software') {
+                loadLicensesTable();
+            }
+        }
+
+        // Funcionalidade de Telas & Modais
+        function openPanel() { document.getElementById('assetPanel').classList.add('open'); }
+        function closePanel() { document.getElementById('assetPanel').classList.remove('open'); }
+        async function openAddModal() {
+            document.getElementById('addModalOverlay').style.display = 'flex';
+            populateFormManufs(); // Populate manufacturers
+
+            // Popula o Dropdown de Funcionários
+            try {
+                const res = await fetch('/api/users');
+                const users = await res.json();
+                let opts = '<option value="">-- Estoque da T.I --</option>';
+                users.forEach(u => {
+                    opts += `<option value="${u.id}">${u.name} - ${u.department || 'RH'}</option>`;
+                });
+                document.getElementById('add-user').innerHTML = opts;
+            } catch (e) { console.error('Error fetching users for combobox', e); }
+        }
+        function toggleOwnerSelect() {
+            const statusBox = document.getElementById('add-status');
+            const userBox = document.getElementById('add-user');
+            if (statusBox.value === 'Assigned') {
+                userBox.disabled = false;
+            } else {
+                userBox.disabled = true;
+                userBox.value = "";
+            }
+        }
+        function closeAddModal() { document.getElementById('addModalOverlay').style.display = 'none'; }
+        function openAddTypeModal() { document.getElementById('addTypeModalOverlay').style.display = 'flex'; }
+        function closeAddTypeModal() { document.getElementById('addTypeModalOverlay').style.display = 'none'; }
+
+        let currentTypeFilter = null;
+
+        async function loadAssetTypes() {
+            const res = await fetch('/api/asset-types');
+            const globals = await res.json();
+
+            const submenu = document.getElementById('hardware-submenu');
+            const select = document.getElementById('add-type');
+
+            let htmlSub = `<div class="nav-link" onclick="filterByType(null, this)" style="font-size: 0.85rem; padding: 8px 12px; color: white; font-weight:700;">Ver Todos</div>`;
+            let htmlSel = ``;
+
+            globals.forEach(t => {
+                htmlSub += `
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                    <div class="nav-link" onclick="filterByType(${t.id}, this)" style="font-size: 0.85rem; padding: 8px 12px; flex:1;">${t.name}</div>
+                    <button onclick="deleteType(${t.id}, '${t.name}')" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-weight:bold; padding: 0 8px;" title="Excluir Categoria">×</button>
+                </div>`;
+                htmlSel += `<option value="${t.id}">${t.name}</option>`;
+            });
+
+            htmlSub += `<button onclick="openAddTypeModal()" style="margin-top: 8px; font-size: 0.8rem; background: transparent; border: 1px dashed rgba(255,255,255,0.3); color: white; padding: 6px; border-radius: 4px; cursor:pointer;">+ Nova Categoria</button>`;
+
+            submenu.innerHTML = htmlSub;
+            select.innerHTML = htmlSel;
+        }
+
+        function filterByType(typeId, elem) {
+            const links = document.getElementById('hardware-submenu').querySelectorAll('.nav-link');
+            links.forEach(l => { l.style.color = '#94a3b8'; l.style.fontWeight = '500'; });
+            if (elem) { elem.style.color = 'white'; elem.style.fontWeight = '700'; }
+
+            currentTypeFilter = typeId;
+            filterAssets();
+        }
+
+        async function saveNewType() {
+            await fetch('/api/asset-types', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: document.getElementById('add-type-name').value })
+            });
+            document.getElementById('add-type-name').value = '';
+            closeAddTypeModal();
+            loadAssetTypes();
+        }
+
+        async function deleteType(typeId, typeName) {
+            if (!confirm(`Tem certeza que deseja excluir a categoria "${typeName}"?`)) return;
+
+            try {
+                const res = await fetch(`/api/asset-types/${typeId}`, {
+                    method: 'DELETE'
+                });
+
+                if (res.ok) {
+                    if (currentTypeFilter === typeId) {
+                        currentTypeFilter = null; // reseta filtro se estava ativo
+                        filterAssets();
+                    }
+                    loadAssetTypes();
+                } else {
+                    const err = await res.json();
+                    alert(err.error || 'Erro ao excluir a categoria.');
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Erro na conexão com o sistema.");
+            }
+        }
+
+        function switchTab(tabId) {
+            document.getElementById('tab-specs').classList.remove('active');
+            document.getElementById('tab-history').classList.remove('active');
+            document.getElementById('tab-issues').classList.remove('active');
+            document.getElementById('content-specs').classList.add('hidden');
+            document.getElementById('content-history').classList.add('hidden');
+            document.getElementById('content-issues').classList.add('hidden');
+            document.getElementById('tab-' + tabId).classList.add('active');
+            document.getElementById('content-' + tabId).classList.remove('hidden');
+        }
+
+        function translateStatus(statusStr) {
+            if (statusStr === 'In_Stock' || statusStr === 'Em estoque') return 'Em Estoque';
+            if (statusStr === 'Assigned' || statusStr === 'Em Uso') return 'Em Uso';
+            if (statusStr === 'Maintenance' || statusStr === 'Em Manutencao') return 'Manutenção';
+            if (statusStr === 'Lost' || statusStr === 'Perdido' || statusStr === 'Furtado') return 'Perdido/Furtado';
+            if (statusStr === 'Desativado') return 'Desativado';
+            return statusStr;
+        }
+
+        // Função de Filtro de Busca (Search)
+        function filterAssets() {
+            const term = document.getElementById('search-input').value.toLowerCase();
+            const tbody = document.getElementById('assets-tbody');
+            let html = '';
+
+            // Gerencia o botão "X" de limpar
+            const clearBtn = document.getElementById('search-clear-btn');
+            clearBtn.style.display = term.length > 0 ? 'flex' : 'none';
+
+            // Filtra os itens em memória por categoria e texto
+            const results = globalAssets.filter(asset => {
+                if (currentTypeFilter && asset.type_id !== currentTypeFilter) return false;
+                const searchString = `${asset.asset_tag || ''} ${asset.model || ''} ${asset.current_user || ''} ${asset.department || ''} ${translateStatus(asset.status)}`.toLowerCase();
+                return searchString.includes(term);
+            });
+
+            // ------ Recalcula os cards do dashboard com base no filtro ------
+            const typeAssets = currentTypeFilter
+                ? globalAssets.filter(a => a.type_id === currentTypeFilter)
+                : globalAssets;
+
+            const statsTotal  = typeAssets.length;
+            const statsStock  = typeAssets.filter(a => a.status === 'In_Stock' || a.status === 'Em estoque').length;
+            const statsMaint  = typeAssets.filter(a => a.status === 'Maintenance' || a.status === 'Em Manutencao').length;
+            const statsLost   = typeAssets.filter(a => ['Lost','Perdido','Furtado'].includes(a.status)).length;
+
+            document.getElementById('stat-total').innerText = statsTotal;
+            document.getElementById('stat-stock').innerText = statsStock;
+            document.getElementById('stat-maint').innerText = statsMaint;
+            document.getElementById('stat-lost').innerText  = statsLost;
+
+            // Atualiza o rótulo do primeiro card
+            if (currentTypeFilter) {
+                const activeLink = document.querySelector('#hardware-submenu .nav-link[style*="font-weight: 700"], #hardware-submenu .nav-link[style*="font-weight:700"]');
+                const categoryName = activeLink ? activeLink.innerText.trim() : 'Categoria';
+                document.getElementById('stat-total-label').innerText = `Total de ${categoryName}`;
+            } else {
+                document.getElementById('stat-total-label').innerText = 'Total de Equipamentos';
+            }
+            // ---------------------------------------------------------------
+
+            // Re-renderiza a tabela
+            if (results.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#64748b;padding:32px;">Nenhum equipamento encontrado com esses parâmetros.</td></tr>';
+                return;
+            }
+
+            results.forEach(asset => {
+                let tagClass = 'tag';
+                if (asset.status === 'Assigned' || asset.status === 'Em Uso') tagClass = 'tag assigned';
+                else if (asset.status === 'In_Stock' || asset.status === 'Em estoque') tagClass = 'tag stock';
+                else if (asset.status === 'Maintenance' || asset.status === 'Em Manutencao') tagClass = 'tag broken';
+                else if (asset.status === 'Lost' || asset.status === 'Perdido' || asset.status === 'Furtado') tagClass = 'tag broken';
+                else if (asset.status === 'Desativado') tagClass = 'tag terminated';
+
+                html += `
+                    <tr onclick="loadAssetDetails('${asset.id}')">
+                        <td style="font-weight:600; color:var(--primary)">${asset.asset_tag}</td>
+                        <td>${asset.model}</td>
+                        <td>${asset.current_user || '<i><small>Estoque/GTI</small></i>'}</td>
+                        <td>${asset.department || '-'}</td>
+                        <td><span class="${tagClass}">${translateStatus(asset.status)}</span></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            filterAssets();
+            document.getElementById('search-input').focus();
+        }
+
+        // Lógica da API Leitura Principal
+        async function loadDashboard() {
+            try {
+                await fetchStandardModels(); // Load models metadata
+
+                // Estatísticas
+                const statsRes = await fetch('/api/stats');
+                const stats = await statsRes.json();
+
+                document.getElementById('stat-total').innerText = stats.total;
+                document.getElementById('stat-stock').innerText = stats.in_stock;
+                document.getElementById('stat-maint').innerText = stats.maintenance;
+                document.getElementById('stat-lost').innerText = stats.lost;
+
+                // Tabela de Máquinas e Gravação na Memória (Para Pesquisa Rápida)
+                const assetsRes = await fetch('/api/assets');
+                globalAssets = await assetsRes.json();
+
+                // Exibe a tabela inicialmente com todos
+                loadAssetTypes(); // Popula categorias  
+                filterAssets();
+            } catch (err) {
+                console.error('Erro ao carregar dashboard', err);
+            }
+        }
+
+        async function fetchStandardModels() {
+            try {
+                const res = await fetch('/api/models');
+                globalStandardModels = await res.json();
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadModelsTable() {
+            await fetchStandardModels();
+            const tbody = document.getElementById('models-tbody');
+            let html = '';
+            if (globalStandardModels.length === 0) {
+                html = '<tr><td colspan="5" style="text-align:center;color:#64748b;padding: 32px;">Nenhum modelo cadastrado.</td></tr>';
+            } else {
+                globalStandardModels.forEach(m => {
+                    html += `<tr>
+                        <td style="font-weight:600">${m.manufacturer}</td>
+                        <td>${m.name}</td>
+                        <td>${m.cpu || '-'}</td>
+                        <td>${m.ram || '-'}</td>
+                        <td>${m.storage || '-'}</td>
+                    </tr>`;
+                });
+            }
+            tbody.innerHTML = html;
+        }
+
+        function openModelModal() { document.getElementById('addModelModalOverlay').style.display = 'flex'; }
+        function closeModelModal() { document.getElementById('addModelModalOverlay').style.display = 'none'; }
+
+        async function saveNewStandardModel() {
+            const payload = {
+                manufacturer: document.getElementById('new-model-manuf').value.trim(),
+                name: document.getElementById('new-model-name').value.trim(),
+                cpu: document.getElementById('new-model-cpu').value.trim(),
+                ram: document.getElementById('new-model-ram').value.trim(),
+                storage: document.getElementById('new-model-storage').value.trim()
+            };
+            if (!payload.manufacturer || !payload.name) {
+                alert('Fabricante e Nome do Modelo são obrigatórios.'); return;
+            }
+            await fetch('/api/models', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            document.getElementById('new-model-manuf').value = '';
+            document.getElementById('new-model-name').value = '';
+            document.getElementById('new-model-cpu').value = '';
+            document.getElementById('new-model-ram').value = '';
+            document.getElementById('new-model-storage').value = '';
+            closeModelModal();
+            loadModelsTable();
+        }
+
+        function populateFormManufs() {
+            let manufs = new Set();
+            globalStandardModels.forEach(m => manufs.add(m.manufacturer));
+            let opts = '<option value="">-- Selecione Fabricante --</option>';
+            Array.from(manufs).sort().forEach(mf => {
+                opts += `<option value="${mf}">${mf}</option>`;
+            });
+            opts += '<option value="Outro">Outro (Inserir Manual)</option>';
+            document.getElementById('add-manuf').innerHTML = opts;
+            filterAddModels();
+        }
+
+        function filterAddModels() {
+            const mf = document.getElementById('add-manuf').value;
+            let opts = '<option value="">-- Selecione o Modelo --</option>';
+
+            if (mf === 'Outro') {
+                opts = '<option value="Desconhecido">Modelo Genérico ou Específico</option>';
+            } else {
+                const filtered = globalStandardModels.filter(m => m.manufacturer === mf);
+                filtered.forEach(m => {
+                    opts += `<option value="${m.id}">${m.name}</option>`;
+                });
+            }
+            document.getElementById('add-model').innerHTML = opts;
+        }
+
+        // Carrega Usuários do Banco e renderiza na Tela de RH
+        async function loadUsersTable() {
+            try {
+                const tbody = document.getElementById('users-tbody');
+                const res = await fetch('/api/users');
+                const users = await res.json();
+
+                let html = '';
+                users.forEach(u => {
+                    let statusTag = u.status === 'Active' ? '<span class="tag assigned">Ativo</span>' : '<span class="tag terminated">Desligado</span>';
+                    html += `<tr>
+                        <td style="color: var(--text-muted); font-family: monospace;">${u.registration_number || '-'}</td>
+                        <td style="font-weight:600; color: var(--text-main);">${u.name}</td>
+                        <td>${u.department || 'A Definir'}</td>
+                        <td>${u.email || '-'}</td>
+                        <td>${statusTag}</td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+
+            } catch (err) {
+                console.error('Erro ao carregar Funcionários', err);
+            }
+        }
+
+        function openUserModal() { document.getElementById('addUserModalOverlay').style.display = 'flex'; }
+        function closeUserModal() { document.getElementById('addUserModalOverlay').style.display = 'none'; }
+
+        async function saveNewUser() {
+            const payload = {
+                name: document.getElementById('new-user-name').value.trim(),
+                registration_number: document.getElementById('new-user-reg').value.trim(),
+                email: document.getElementById('new-user-email').value.trim(),
+                department: document.getElementById('new-user-dept').value.trim()
+            };
+
+            if (!payload.name) {
+                alert("O Nome é obrigatório.");
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    document.getElementById('new-user-name').value = '';
+                    document.getElementById('new-user-reg').value = '';
+                    document.getElementById('new-user-email').value = '';
+                    document.getElementById('new-user-dept').value = '';
+                    closeUserModal();
+                    loadUsersTable();
+                } else {
+                    const err = await res.json();
+                    alert(err.error || 'Erro ao criar funcionário.');
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Erro na conexão com o sistema.");
+            }
+        }
+
+        // Carrega Matriz Relacional Usuário vs Posse
+        async function loadReportsGrid() {
+            try {
+                const tbody = document.getElementById('reports-users-tbody');
+                const res = await fetch('/api/reports/user-assets');
+                const gridData = await res.json();
+
+                globalReportsData = gridData; // Atualiza a store global para o mapa mental
+
+                let html = '';
+                gridData.forEach(user => {
+                    let assetsHtml = '';
+                    if (user.assets && user.assets.length > 0) {
+                        user.assets.forEach(a => {
+                            assetsHtml += `<div style="margin-bottom:4px">
+                                                <span class="tag stock" style="font-size:0.7rem">${a.type}</span> 
+                                                <strong>${a.tag}</strong> - <span style="font-size:0.85rem">${a.model}</span>
+                                           </div>`;
+                        });
+                    } else {
+                        assetsHtml = `<i style="color: var(--text-muted); font-size: 0.85rem;">Nenhum equipamento logado</i>`;
+                    }
+
+                    html += `<tr onclick="openMindMap('${user.id}')" title="Clique para ver o Mapa Mental">
+                        <td style="font-weight:600; color: var(--text-main); vertical-align:top;">
+                            ${user.name}<br>
+                            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight:400">${user.email || '-'}</span>
+                        </td>
+                        <td style="vertical-align:top;">${user.department || 'A Definir'}</td>
+                        <td style="vertical-align:top;">${assetsHtml}</td>
+                        <td style="vertical-align:top; text-align: right;">
+                            <button class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem; background: white; color: var(--text-main); border: 1px solid var(--border); box-shadow: none;" onclick="event.stopPropagation(); alert('Na próxima versão, este botão irá gerar o Termo de Posse legalmente exigido e em formato PDF ou disparo para o Jira para assinatura.')">
+                                📄 Gerar Termo
+                            </button>
+                        </td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+
+            } catch (err) {
+                console.error('Erro ao carregar Grade Relacional', err);
+            }
+        }
+
+        function openMindMap(userId) {
+            const user = globalReportsData.find(u => u.id == userId);
+            if (!user) return;
+
+            const container = document.getElementById('mindmap-container');
+
+            let childrenHtml = '';
+            if (user.assets && user.assets.length > 0) {
+                childrenHtml = `<ul>`;
+                user.assets.forEach(a => {
+                    childrenHtml += `
+                        <li>
+                            <a href="#" onclick="loadAssetDetails('${a.id}')">
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px; text-transform:uppercase; font-weight:700;">${a.type}</div>
+                                <div style="font-weight:bold; color:var(--primary); font-size:1.1rem; margin-bottom:8px;">${a.tag}</div>
+                                <div style="font-size:0.85rem;">${a.model}</div>
+                            </a>
+                        </li>
+                    `;
+                });
+                childrenHtml += `</ul>`;
+            } else {
+                childrenHtml = `
+                    <ul style="opacity: 0.6">
+                        <li><a href="#" style="border-style: dashed;">Nenhum Equipamento</a></li>
+                    </ul>
+                `;
+            }
+
+            const treeHtml = `
+                <ul>
+                    <li>
+                        <a href="#" class="root-node">
+                            <div style="font-weight:800; font-size:1.2rem; margin-bottom:4px;">${user.name}</div>
+                            <div style="font-size:0.85rem; opacity:0.8;">${user.department || 'A definir'}</div>
+                        </a>
+                        ${childrenHtml}
+                    </li>
+                </ul>
+            `;
+
+            container.innerHTML = treeHtml;
+            document.getElementById('mindMapModalOverlay').style.display = 'flex';
+        }
+
+        function closeMindMap() {
+            document.getElementById('mindMapModalOverlay').style.display = 'none';
+        }
+
+        async function loadDeletedAssets() {
+            try {
+                const tbody = document.getElementById('deleted-assets-tbody');
+                const res = await fetch('/api/assets/deleted');
+                const assets = await res.json();
+
+                let html = '';
+                if (assets.length === 0) {
+                    html = '<tr><td colspan="5" style="text-align:center;color:#64748b;padding:32px;">Nenhuma máquina excluída encontrada.</td></tr>';
+                } else {
+                    assets.forEach(a => {
+                        let dateStr = a.deleted_at ? new Date(a.deleted_at).toLocaleDateString('pt-BR') : '-';
+                        html += `<tr>
+                            <td style="font-weight:600; color:var(--danger)">${a.asset_tag}</td>
+                            <td>${a.manufacturer} ${a.model}</td>
+                            <td>${dateStr}</td>
+                            <td><div style="font-size: 0.85rem; max-width: 300px; line-height: 1.4">${a.justification || '-'}</div></td>
+                            <td>
+                                <button onclick="restoreAsset('${a.id}', '${a.asset_tag}')"
+                                    style="background:#16a34a; color:white; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-size:0.8rem;">
+                                    ↩ Restaurar
+                                </button>
+                            </td>
+                        </tr>`;
+                    });
+                }
+                tbody.innerHTML = html;
+            } catch (err) {
+                console.error('Erro ao carregar máquinas excluídas', err);
+            }
+        }
+
+        async function restoreAsset(assetId, assetTag) {
+            if (!confirm(`Deseja restaurar o equipamento "${assetTag}" ao inventário?`)) return;
+
+            try {
+                const res = await fetch(`/api/assets/${assetId}/restore`, { method: 'POST' });
+                if (res.ok) {
+                    loadDeletedAssets();
+                    loadDashboard();
+                    alert(`Equipamento "${assetTag}" restaurado! Ele voltou ao status "Em Estoque".`);
+                } else {
+                    const err = await res.json();
+                    alert('Erro ao restaurar: ' + err.error);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Erro na conexão.');
+            }
+        }
+
+        async function loadAssetDetails(assetId) {
+            try {
+                const res = await fetch(`/api/assets/${assetId}`);
+                const data = await res.json();
+                const asset = data.asset;
+
+                document.getElementById('current-detail-id').value = assetId;
+
+                const reclaimBtn = document.getElementById('btn-reclaim');
+                if ((asset.status === 'Assigned' || asset.status === 'Em Uso') && asset.current_user_name != null) {
+                    reclaimBtn.style.display = 'block';
+                } else {
+                    reclaimBtn.style.display = 'none';
+                }
+
+                document.getElementById('panel-asset-tag').innerText = asset.asset_tag;
+
+                // Define a mensagem e a cor do badge de status
+                let assignedMsg = "Em Uso por: ";
+                let statusBadgeClass = 'tag assigned'; // verde por padrão
+                if (asset.status === 'In_Stock' || asset.status === 'Em estoque') {
+                    assignedMsg = "Guardado: ";
+                    statusBadgeClass = 'tag stock'; // azul
+                } else if (asset.status === 'Maintenance' || asset.status === 'Em Manutencao') {
+                    assignedMsg = "Retido na Assistência: ";
+                    statusBadgeClass = 'tag broken'; // vermelho
+                } else if (asset.status === 'Lost' || asset.status === 'Perdido' || asset.status === 'Furtado') {
+                    assignedMsg = "Perdido/Furtado: ";
+                    statusBadgeClass = 'tag broken'; // vermelho
+                } else if (asset.status === 'Desativado') {
+                    assignedMsg = "Desativado: ";
+                    statusBadgeClass = 'tag terminated'; // âmbar
+                }
+                const badge = document.getElementById('panel-assigned-to');
+                badge.className = statusBadgeClass;
+                badge.innerHTML = assignedMsg + (asset.current_user_name || 'Almoxarifado T.I');
+
+                document.getElementById('spec-serial').innerText = asset.serial_number;
+                document.getElementById('spec-model').innerText = asset.manufacturer + ' ' + asset.model;
+                let custom = asset.custom_attributes || {};
+                document.getElementById('spec-cpu').innerText = custom.cpu || 'Padrão Corpoativo';
+                document.getElementById('spec-ram').innerText = custom.ram || '8GB Base';
+                document.getElementById('spec-storage').innerText = custom.storage || 'SSD 256GB';
+
+                let histHtml = '';
+                data.history.forEach(h => {
+                    let dateStr = new Date(h.assigned_at).toLocaleDateString('pt-BR');
+                    let retStr = h.returned_at ? `<div class="time-sub">Devolvido em: ${new Date(h.returned_at).toLocaleDateString('pt-BR')} ${h.condition_on_return ? '- Vistoria: ' + h.condition_on_return : ''}</div>` : '';
+
+                    let movementInfo = '';
+                    if (h.movement_type === 'transfer' || h.movement_type === 'return' || h.justification || h.notes) {
+                        let textBlock = [];
+                        if (h.justification) textBlock.push(h.justification);
+                        if (h.notes) textBlock.push(`<i>${h.notes}</i>`);
+
+                        movementInfo = `
+                            <div style="background: #f8fafc; padding: 8px; border-radius: 4px; margin-top: 8px; border-left: 3px solid #cbd5e1;">
+                                <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 2px;">MOTIVO / JUSTIFICATIVA:</div>
+                                <div style="font-size: 0.85rem;">${textBlock.join('<br>') || 'N/A'}</div>
+                                ${h.ticket_number ? `<div style="font-size: 0.75rem; color: var(--primary); font-weight: 600; margin-top: 4px;">Chamado: ${h.ticket_number}</div>` : ''}
+                            </div>
+                        `;
+                    }
+
+                    histHtml += `
+                        <div class="timeline-item">
+                            <div class="time-date">${dateStr}</div>
+                            <div class="time-desc">${h.user_name ? `Posse de <strong>${h.user_name}</strong>` : 'Movimentação ao <strong>Estoque</strong>'}</div>
+                            <div class="time-sub">Setor: ${h.department || 'TI/Estoque'} | Resp.: ${h.assigned_by || 'Sistema'}</div>
+                            ${retStr}
+                            ${movementInfo}
+                        </div>
+                    `;
+                });
+                document.getElementById('history-timeline').innerHTML = histHtml || '<p style="color: #64748b;">Nenhuma transferência registrada para essa máquina.</p>';
+
+                let maintHtml = '';
+                data.maintenance.forEach(m => {
+                    let dateStr = new Date(m.reported_date).toLocaleDateString('pt-BR');
+                    let statusStr = m.resolved_date ? `<span style="color:var(--success)">Resolvido</span>` : `<span style="color:var(--warning)">Aguardando Solução</span>`;
+
+                    const isOpen = !m.resolved_date;
+                    const borderColor = isOpen ? 'var(--danger)' : 'var(--success)';
+                    maintHtml += `
+                        <div class="card" style="margin-bottom: 16px; border-left: 4px solid ${borderColor};">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <div>
+                                    <div class="time-date">${dateStr}</div>
+                                    <div style="font-weight: 600; margin-bottom: 8px;">${m.issue_type}</div>
+                                    <p style="font-size: 0.9rem; color: var(--text-muted)">${m.description}</p>
+                                    ${m.resolution_notes ? `<p style="font-size: 0.9rem; color: var(--success); margin-top:8px"><b>✅ Resolução:</b> ${m.resolution_notes}</p>` : ''}
+                                    <div class="time-sub" style="margin-top: 12px; font-weight: 500;">Status Ticket: ${statusStr} ${m.handled_by ? 'com ' + m.handled_by : ''}</div>
+                                </div>
+                                ${isOpen ? `<button onclick="openResolveModal('${m.id}')" style="background:#16a34a; color:white; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-size:0.8rem; white-space:nowrap; margin-left:12px;">✅ Resolver</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                document.getElementById('maintenance-logs-container').innerHTML = maintHtml || '<p style="color: #64748b;">Nenhum chamado de hardware aberto.</p>';
+
+                document.getElementById('tab-history').innerText = `Histórico de Usuários (${data.history.length})`;
+                document.getElementById('tab-issues').innerText = `Ocorrências de T.I (${data.maintenance.length})`;
+
+                openPanel();
+                switchTab('history');
+            } catch (err) {
+                console.error('Erro ao carregar Asset', err);
+            }
+        }
+
+        let currentResolveId = null;
+
+        function openResolveModal(maintenanceId) {
+            currentResolveId = maintenanceId;
+            document.getElementById('resolve-notes').value = '';
+            document.getElementById('resolve-new-status').value = 'In_Stock';
+            document.getElementById('resolveModalOverlay').style.display = 'flex';
+        }
+
+        function closeResolveModal() {
+            document.getElementById('resolveModalOverlay').style.display = 'none';
+            currentResolveId = null;
+        }
+
+        async function saveResolve() {
+            const notes = document.getElementById('resolve-notes').value.trim();
+            if (!notes) { alert('Por favor, descreva o que foi feito para resolver o chamado.'); return; }
+
+            const newStatus = document.getElementById('resolve-new-status').value;
+            const assetId   = document.getElementById('current-detail-id').value;
+
+            try {
+                const res = await fetch(`/api/maintenance/${currentResolveId}/resolve`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ resolution_notes: notes, new_asset_status: newStatus })
+                });
+
+                if (res.ok) {
+                    closeResolveModal();
+                    loadAssetDetails(assetId);
+                    loadDashboard();
+                } else {
+                    const err = await res.json();
+                    alert('Erro: ' + err.error);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Erro na conexão com o servidor.');
+            }
+        }
+
+        function openSpecsModal() {
+            // Pré-preenche o modal com os valores atuais exibidos no painel
+            document.getElementById('edit-serial').value       = document.getElementById('spec-serial').innerText.replace('-','').trim();
+            document.getElementById('edit-cpu').value          = document.getElementById('spec-cpu').innerText.replace('Padrão Corpoativo','').trim();
+            document.getElementById('edit-ram').value          = document.getElementById('spec-ram').innerText.replace('8GB Base','').trim();
+            document.getElementById('edit-storage').value      = document.getElementById('spec-storage').innerText.replace('SSD 256GB','').trim();
+
+            // Manufacturer + Model ficam no spec-model como "Fabricante Modelo"
+            const fullModel = document.getElementById('spec-model').innerText.trim();
+            const parts = fullModel.split(' ');
+            document.getElementById('edit-manufacturer').value = parts[0] || '';
+            document.getElementById('edit-model').value        = parts.slice(1).join(' ') || '';
+
+            document.getElementById('editSpecsModalOverlay').style.display = 'flex';
+        }
+
+        function closeSpecsModal() {
+            document.getElementById('editSpecsModalOverlay').style.display = 'none';
+        }
+
+        async function saveSpecs() {
+            const assetId = document.getElementById('current-detail-id').value;
+            const payload = {
+                manufacturer:      document.getElementById('edit-manufacturer').value.trim(),
+                model:             document.getElementById('edit-model').value.trim(),
+                serial_number:     document.getElementById('edit-serial').value.trim(),
+                custom_attributes: {
+                    cpu:     document.getElementById('edit-cpu').value.trim(),
+                    ram:     document.getElementById('edit-ram').value.trim(),
+                    storage: document.getElementById('edit-storage').value.trim()
+                }
+            };
+
+            try {
+                const res = await fetch(`/api/assets/${assetId}/specs`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    closeSpecsModal();
+                    loadAssetDetails(assetId); // Recarrega o painel com os novos dados
+                    loadDashboard();            // Atualiza a listagem principal
+                } else {
+                    const err = await res.json();
+                    alert('Erro ao salvar: ' + err.error);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Erro na conexão com o servidor.');
+            }
+        }
+
+        async function saveNewAsset() {
+            let userIdValue = document.getElementById('add-user').value;
+
+            // Extract model details
+            let manuf = document.getElementById('add-manuf').value;
+            let modelId = document.getElementById('add-model').value;
+            let finalModelName = modelId;
+            let customAttr = {};
+
+            if (manuf !== 'Outro' && modelId !== 'Desconhecido') {
+                const selModel = globalStandardModels.find(m => m.id == modelId);
+                if (selModel) {
+                    finalModelName = selModel.name;
+                    customAttr = {
+                        cpu: selModel.cpu,
+                        ram: selModel.ram,
+                        storage: selModel.storage
+                    };
+                }
+            }
+
+            const payload = {
+                type_id: parseInt(document.getElementById('add-type').value),
+                asset_tag: document.getElementById('add-tag').value,
+                serial_number: null,
+                manufacturer: manuf,
+                model: finalModelName,
+                status: document.getElementById('add-status').value, // In_Stock, Assigned, Maintenance
+                current_user_id: userIdValue ? parseInt(userIdValue) : null,
+                purchase_date: null,
+                custom_attributes: customAttr
+            };
+
+            await fetch('/api/assets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            document.getElementById('add-tag').value = '';
+            closeAddModal();
+            loadDashboard();
+        }
+
+        function openReturnModal() {
+            document.getElementById('return-justification').value = '';
+            document.getElementById('returnModalOverlay').style.display = 'flex';
+        }
+
+        function closeReturnModal() {
+            document.getElementById('returnModalOverlay').style.display = 'none';
+        }
+
+        async function returnAsset() {
+            const id = document.getElementById('current-detail-id').value;
+            const justif = document.getElementById('return-justification').value.trim();
+
+            if (!justif) {
+                alert("A justificativa é obrigatória para registrar a devolução.");
+                return;
+            }
+
+            await fetch(`/api/assets/${id}/return`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ justification: justif })
+            });
+
+            closeReturnModal();
+            closePanel();
+            loadDashboard();
+        }
+
+        async function openTransferModal() {
+            const assetId = document.getElementById('current-detail-id').value;
+            document.getElementById('transferModalOverlay').style.display = 'flex';
+
+            // Reseta campos
+            document.getElementById('transfer-justification').value = '';
+            document.getElementById('transfer-ticket').value = '';
+
+            // Popula o Dropdown de Funcionários
+            try {
+                const res = await fetch('/api/users');
+                const users = await res.json();
+                let opts = '<option value="">-- Estoque da T.I --</option>';
+                users.forEach(u => {
+                    opts += `<option value="${u.id}">${u.name} - ${u.department || 'RH'}</option>`;
+                });
+                document.getElementById('transfer-user').innerHTML = opts;
+            } catch (e) { console.error('Error fetching users for combobox', e); }
+        }
+
+        function toggleTransferOwner() {
+            const statusBox = document.getElementById('transfer-status');
+            const userBox = document.getElementById('transfer-user');
+            if (statusBox.value === 'Assigned') {
+                userBox.disabled = false;
+            } else {
+                userBox.disabled = true;
+                userBox.value = "";
+            }
+        }
+
+        function closeTransferModal() { document.getElementById('transferModalOverlay').style.display = 'none'; }
+
+        function openMaintenanceModal() {
+            document.getElementById('maint-description').value = '';
+            document.getElementById('maint-ticket').value = '';
+            document.getElementById('maintenanceModalOverlay').style.display = 'flex';
+        }
+
+        function closeMaintenanceModal() { document.getElementById('maintenanceModalOverlay').style.display = 'none'; }
+
+        async function saveMaintenance() {
+            const assetId = document.getElementById('current-detail-id').value;
+            const issueType = document.getElementById('maint-issue-type').value;
+            const ticket = document.getElementById('maint-ticket').value.trim();
+            const description = document.getElementById('maint-description').value.trim();
+
+            if (!description) {
+                alert('A descrição do problema é obrigatória.');
+                return;
+            }
+
+            const payload = {
+                issue_type: issueType,
+                ticket_number: ticket,
+                description: description
+            };
+
+            try {
+                const res = await fetch(`/api/assets/${assetId}/maintenance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    closeMaintenanceModal();
+                    loadAssetDetails(assetId); // Recarrega painel
+                    loadDashboard(); // Recarrega lista
+                    switchTab('issues'); // Move para a tab de problemas
+                } else {
+                    const err = await res.json();
+                    alert('Erro ao abrir manutenção: ' + err.error);
+                }
+            } catch (e) {
+                console.error('Falha', e);
+            }
+        }
+
+        async function saveTransfer() {
+            const assetId = document.getElementById('current-detail-id').value;
+            const newUserId = document.getElementById('transfer-user').value || null;
+            const newStatus = document.getElementById('transfer-status').value;
+            const ticket = document.getElementById('transfer-ticket').value.trim();
+            const justification = document.getElementById('transfer-justification').value.trim();
+
+            if (!justification) {
+                alert('A justificativa é obrigatória para registrar a movimentação formal.');
+                return;
+            }
+
+            const payload = {
+                new_user_id: newUserId,
+                new_status: newStatus,
+                ticket_number: ticket,
+                justification: justification
+            };
+
+            try {
+                const res = await fetch(`/api/assets/${assetId}/transfer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    closeTransferModal();
+                    loadAssetDetails(assetId); // Recarrega painel
+                    loadDashboard(); // Recarrega lista
+                } else {
+                    const err = await res.json();
+                    alert('Erro na transferência: ' + err.error);
+                }
+            } catch (e) {
+                console.error('Falha na transferência', e);
+            }
+        }
+
+        async function deleteAsset() {
+            const assetId = document.getElementById('current-detail-id').value;
+            const justification = document.getElementById('delete-justification').value.trim();
+
+            if (!justification) {
+                alert('A justificativa é obrigatória para excluir a máquina.');
+                return;
+            }
+
+            if (!confirm('Tem certeza que deseja marcar esta máquina como excluída?')) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/assets/${assetId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ justification })
+                });
+
+                if (res.ok) {
+                    closeDeleteModal();
+                    closePanel();
+                    loadDashboard(); // Recarrega a lista
+                } else {
+                    const err = await res.json();
+                    alert('Erro ao excluir: ' + err.error);
+                }
+            } catch (e) {
+                console.error('Falha na exclusão', e);
+                alert('Erro na comunicação com o servidor.');
+            }
+        }
+
+        function openDeleteModal() {
+            document.getElementById('delete-justification').value = '';
+            document.getElementById('deleteModalOverlay').style.display = 'flex';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModalOverlay').style.display = 'none';
+        }
+
+        // --- SISTEMA DE FILA DO JIRA ---
+        async function fetchJiraQueue() {
+            try {
+                const res = await fetch('/api/jira/queue');
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('jira-queue-count').innerText = `(${data.pendingCount})`;
+                    document.getElementById('jira-queue-modal-count').innerText = data.pendingCount;
+
+                    if (data.pendingCount > 0) {
+                        document.getElementById('jira-sync-btn').style.background = '#f59e0b'; // warning color
+                    } else {
+                        document.getElementById('jira-sync-btn').style.background = 'var(--primary)';
+                    }
+                }
+            } catch (e) { console.error('Error fetching Jira queue', e); }
+        }
+
+        function openJiraSyncModal() {
+            document.getElementById('jiraSyncModalOverlay').style.display = 'flex';
+        }
+        function closeJiraSyncModal() {
+            document.getElementById('jiraSyncModalOverlay').style.display = 'none';
+        }
+
+        async function syncJira() {
+            const btn = document.querySelector('#jiraSyncModalOverlay .btn-primary[onclick="syncJira()"]');
+            btn.innerText = 'Sincronizando...';
+            btn.disabled = true;
+            try {
+                const res = await fetch('/api/jira/sync', { method: 'POST' });
+                if (res.ok) {
+                    const data = await res.json();
+                    alert(`Sincronização concluída! ${data.created} chamados criados.`);
+                    closeJiraSyncModal();
+                    loadDashboard();
+                } else {
+                    const err = await res.json();
+                    alert('Erro na sincronização: ' + err.error);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Erro na comunicação ao sincronizar.');
+            }
+            btn.innerText = 'Sincronizar Agora';
+            btn.disabled = false;
+        }
+
+        // Sobrescrevendo loadDashboard para também atualizar a contagem
+        const originalLoadDashboard = loadDashboard;
+        loadDashboard = async function () {
+            await originalLoadDashboard();
+            await fetchJiraQueue();
+        };
+
+        window.onload = function () {
+            loadDashboard();
+        };
+    </script>
+</body>
+
+</html>
