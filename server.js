@@ -94,8 +94,21 @@ async function notifyJiraMovement(assetId, movementType, details, oldOwnerName =
 // APIs de Leitura (GET)
 app.get('/api/jira/queue', async (req, res) => {
     try {
-        const result = await pool.query(`SELECT count(*) FROM jira_queue WHERE status = 'PENDING'`);
-        res.json({ pendingCount: parseInt(result.rows[0].count) });
+        const result = await pool.query(`SELECT id, summary, description, created_at FROM jira_queue WHERE status = 'PENDING' ORDER BY created_at ASC`);
+        res.json({ 
+            pendingCount: result.rows.length,
+            items: result.rows
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/jira/queue/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query(`DELETE FROM jira_queue WHERE id = $1`, [id]);
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -129,10 +142,29 @@ app.post('/api/jira/sync', async (req, res) => {
 
 app.get('/api/stats', async (req, res) => {
     try {
-        const total = await pool.query("SELECT count(*) as count FROM inventory_assets WHERE status != 'Deleted'");
-        const in_stock = await pool.query("SELECT count(*) as count FROM inventory_assets WHERE status IN ('In_Stock', 'Em estoque')");
-        const maintenance = await pool.query("SELECT count(*) as count FROM inventory_assets WHERE status IN ('Maintenance', 'Em Manutencao')");
-        const lost = await pool.query("SELECT count(*) as count FROM inventory_assets WHERE status IN ('Lost', 'Perdido', 'Furtado')");
+        const { typeId } = req.query;
+        let whereClause = "WHERE status != 'Deleted'";
+        let params = [];
+        
+        // Ensure typeId is a valid number/ID and not the string "null"
+        const validTypeId = (typeId && typeId !== 'null' && typeId !== 'undefined') ? typeId : null;
+
+        if (validTypeId) {
+            whereClause += " AND type_id = $1";
+            params.push(validTypeId);
+        }
+
+        const total = await pool.query(`SELECT count(*) as count FROM inventory_assets ${whereClause}`, params);
+        
+        const in_stock_clause = validTypeId ? 
+            "WHERE type_id = $1 AND status IN ('In_Stock', 'Em estoque', 'Assigned')" : 
+            "WHERE status IN ('In_Stock', 'Em estoque', 'Assigned')";
+        // Note: I included 'Assigned' in total count check if needed, but usually stats are filtered by status.
+        // Actually, let's stick to the user's intended status logic.
+        
+        const in_stock = await pool.query(`SELECT count(*) as count FROM inventory_assets ${validTypeId ? "WHERE type_id = $1 AND (status = 'In_Stock' OR status = 'Em estoque')" : "WHERE (status = 'In_Stock' OR status = 'Em estoque')" }`, params);
+        const maintenance = await pool.query(`SELECT count(*) as count FROM inventory_assets ${validTypeId ? "WHERE type_id = $1 AND (status = 'Maintenance' OR status = 'Em Manutencao')" : "WHERE (status = 'Maintenance' OR status = 'Em Manutencao')" }`, params);
+        const lost = await pool.query(`SELECT count(*) as count FROM inventory_assets ${validTypeId ? "WHERE type_id = $1 AND (status = 'Lost' OR status = 'Perdido')" : "WHERE (status = 'Lost' OR status = 'Perdido')" }`, params);
 
         res.json({
             total: total.rows[0].count,
@@ -148,7 +180,8 @@ app.get('/api/stats', async (req, res) => {
 app.get('/api/assets', async (req, res) => {
     try {
         const result = await pool.query(`
-            SELECT a.id, a.asset_tag, a.model, a.status, a.warranty_expiry, a.type_id,
+            SELECT a.id, a.asset_tag, a.model, a.manufacturer, a.status, a.warranty_expiry, a.type_id,
+                   a.custom_attributes,
                    u.name as current_user, u.department
             FROM inventory_assets a
             LEFT JOIN users u ON a.current_user_id = u.id
@@ -163,16 +196,25 @@ app.get('/api/assets', async (req, res) => {
 
 app.get('/api/assets/deleted', async (req, res) => {
     try {
+        // Usamos LEFT JOIN para garantir que ativos marcados como Deleted apareçam, 
+        // mesmo que não tenham registro formal no histórico (ex: carga legada).
         const result = await pool.query(`
             SELECT a.id, a.asset_tag, a.model, a.manufacturer,
-                   h.assigned_at AS deleted_at, h.justification
+                   COALESCE(h.assigned_at, CURRENT_TIMESTAMP) AS deleted_at, 
+                   COALESCE(h.justification, 'Registro legado / Importado sem justificativa') AS justification
             FROM inventory_assets a
-            JOIN assignment_history h ON a.id = h.asset_id 
-            WHERE a.status = 'Deleted' AND h.movement_type = 'deletion'
-            ORDER BY h.assigned_at DESC;
+            LEFT JOIN (
+                SELECT DISTINCT ON (asset_id) asset_id, assigned_at, justification
+                FROM assignment_history
+                WHERE movement_type = 'deletion'
+                ORDER BY asset_id, assigned_at DESC
+            ) h ON a.id = h.asset_id 
+            WHERE a.status = 'Deleted'
+            ORDER BY deleted_at DESC;
         `);
         res.json(result.rows);
     } catch (err) {
+        console.error('Erro ao buscar máquinas excluídas:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -182,9 +224,10 @@ app.get('/api/assets/:id', async (req, res) => {
         const { id } = req.params;
 
         const assetRes = await pool.query(`
-            SELECT a.*, u.name as current_user_name, u.department
+            SELECT a.*, u.name as current_user_name, u.department, t.name as type
             FROM inventory_assets a
             LEFT JOIN users u ON a.current_user_id = u.id
+            LEFT JOIN asset_types t ON a.type_id = t.id
             WHERE a.id = $1
         `, [id]);
 
@@ -283,6 +326,23 @@ app.put('/api/users/:id', async (req, res) => {
     }
 });
 
+app.delete('/api/users/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Verifica se o usuário tem equipamentos em posse
+        const assetsCheck = await pool.query("SELECT id FROM inventory_assets WHERE current_user_id = $1 AND status != 'Deleted'", [id]);
+        if (assetsCheck.rows.length > 0) {
+            return res.status(400).json({ error: 'Não é possível excluir um colaborador que possui equipamentos em sua posse. Por favor, devolva os equipamentos ao estoque primeiro.' });
+        }
+
+        await pool.query("DELETE FROM users WHERE id = $1", [id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/api/asset-types', async (req, res) => {
     try {
         const result = await pool.query(`SELECT * FROM asset_types ORDER BY name ASC;`);
@@ -294,7 +354,12 @@ app.get('/api/asset-types', async (req, res) => {
 
 app.get('/api/models', async (req, res) => {
     try {
-        const result = await pool.query(`SELECT * FROM hardware_models ORDER BY manufacturer ASC, name ASC;`);
+        const result = await pool.query(`
+            SELECT m.*, t.name as type_name
+            FROM hardware_models m
+            LEFT JOIN asset_types t ON m.type_id = t.id
+            ORDER BY m.manufacturer ASC, m.name ASC;
+        `);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -367,7 +432,6 @@ app.get('/api/reports/inventory-export', async (req, res) => {
         const query = `
             SELECT 
                 a.asset_tag as "Tag Patrimônio",
-                a.serial_number as "N/S",
                 t.name as "Tipo",
                 a.manufacturer as "Fabricante",
                 a.model as "Modelo",
@@ -391,7 +455,7 @@ app.get('/api/reports/inventory-export', async (req, res) => {
         const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
 
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename=Inventario_Quanta_CMDB.xlsx');
+        res.setHeader('Content-Disposition', 'attachment; filename=Inventario_ITAM_CMDB.xlsx');
         res.send(buf);
 
     } catch (err) {
@@ -407,7 +471,7 @@ app.get('/api/reports/generate-term/:userId', async (req, res) => {
 
         const userRes = await pool.query(`
             SELECT u.*, 
-                   json_agg(json_build_object('tag', a.asset_tag, 'model', a.model, 'sn', a.serial_number, 'type', t.name)) as assets
+                   json_agg(json_build_object('tag', a.asset_tag, 'model', a.model, 'type', t.name)) as assets
             FROM users u
             LEFT JOIN inventory_assets a ON u.id = a.current_user_id
             LEFT JOIN asset_types t ON a.type_id = t.id
@@ -426,13 +490,13 @@ app.get('/api/reports/generate-term/:userId', async (req, res) => {
         doc.pipe(res);
 
         // --- CABEÇALHO ---
-        doc.fillColor('#1b5f8c').fontSize(16).text('🚀 QUANTA CMDB - SISTEMA DE GESTÃO ITAM', { align: 'center' });
+        doc.fillColor('#1b5f8c').fontSize(16).text('🚀 ITAM CMDB - SISTEMA DE GESTÃO DE ATIVOS', { align: 'center' });
         doc.moveDown(0.5);
         doc.fillColor('#333').fontSize(12).text('DECLARAÇÃO DE RECEBIMENTO E RESPONSABILIDADE', { align: 'center', underline: true });
         doc.moveDown(1.5);
 
         // --- TEXTO LEGAL ---
-        doc.fontSize(10).fillColor('#000').text(`Declaro para os devidos fins que recebi da Quanta Previdência os equipamentos descritos abaixo, em perfeitas condições de uso, cedidos a título de empréstimo para uso exclusivo de fins de trabalho, comprometendo-me a zelarem por sua guarda e conservação.`, { align: 'justify' });
+        doc.fontSize(10).fillColor('#000').text(`Declaro para os devidos fins que recebi os equipamentos descritos abaixo, em perfeitas condições de uso, cedidos a título de empréstimo para uso exclusivo de fins de trabalho, comprometendo-me a zelarem por sua guarda e conservação.`, { align: 'justify' });
         doc.moveDown();
         doc.text(`Estou ciente das normas de segurança da informação e das políticas internas da empresa, assumindo total responsabilidade pelo uso, guarda e devolução dos mesmos.`);
         doc.moveDown(1.5);
@@ -441,8 +505,7 @@ app.get('/api/reports/generate-term/:userId', async (req, res) => {
         const tableTop = 230;
         doc.fillColor('#1b5f8c').fontSize(11).text('Item', 50, tableTop);
         doc.text('Descrição / Modelo', 100, tableTop);
-        doc.text('Patrimônio', 350, tableTop);
-        doc.text('Nº de Série', 450, tableTop);
+        doc.text('Patrimônio', 400, tableTop);
         
         doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).strokeColor('#ccc').stroke();
 
@@ -451,9 +514,8 @@ app.get('/api/reports/generate-term/:userId', async (req, res) => {
             user.assets.forEach((asset, index) => {
                 doc.fillColor('#444').fontSize(10);
                 doc.text(index + 1, 50, rowY);
-                doc.text(`${asset.type} ${asset.model}`, 100, rowY, { width: 240 });
-                doc.text(asset.tag, 350, rowY);
-                doc.text(asset.sn || 'N/A', 450, rowY);
+                doc.text(`${asset.type} ${asset.model}`, 100, rowY, { width: 280 });
+                doc.text(asset.tag, 400, rowY);
                 rowY += 25;
             });
         } else {
@@ -468,7 +530,7 @@ app.get('/api/reports/generate-term/:userId', async (req, res) => {
         
         doc.fillColor('#000').fontSize(10);
         doc.text('Assinatura do Colaborador', 50, footerY + 5, { width: 200, align: 'center' });
-        doc.text('TI / Infraestrutura (Quanta)', 330, footerY + 5, { width: 200, align: 'center' });
+        doc.text('TI / Infraestrutura', 330, footerY + 5, { width: 200, align: 'center' });
 
         doc.moveDown(4);
         doc.fillColor('#666').fontSize(9);
@@ -490,16 +552,19 @@ app.get('/api/reports/generate-term/:userId', async (req, res) => {
 // 1. Criar novo Ativo (Equipamento genérico)
 app.post('/api/assets', async (req, res) => {
     try {
-        const { asset_tag, serial_number, type_id, manufacturer, model, purchase_date, status, current_user_id, custom_attributes } = req.body;
+        const {
+            asset_tag, type_id, manufacturer, model,
+            status, purchase_date, current_user_id, custom_attributes
+        } = req.body;
 
         const assetStatus = status || 'In_Stock';
         const userId = (assetStatus === 'Assigned' && current_user_id) ? current_user_id : null;
 
         const result = await pool.query(`
-            INSERT INTO inventory_assets (asset_tag, serial_number, type_id, manufacturer, model, status, purchase_date, current_user_id, custom_attributes)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            INSERT INTO inventory_assets (asset_tag, type_id, manufacturer, model, status, purchase_date, current_user_id, custom_attributes)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING id;
-        `, [asset_tag, serial_number, type_id, manufacturer, model, assetStatus, purchase_date, userId, custom_attributes || {}]);
+        `, [asset_tag, type_id, manufacturer, model, assetStatus, purchase_date, userId, custom_attributes || {}]);
 
         const newId = result.rows[0].id;
 
@@ -523,16 +588,15 @@ app.post('/api/assets', async (req, res) => {
 app.put('/api/assets/:id/specs', async (req, res) => {
     try {
         const { id } = req.params;
-        const { manufacturer, model, serial_number, custom_attributes } = req.body;
+        const { manufacturer, model, custom_attributes } = req.body;
 
         await pool.query(`
             UPDATE inventory_assets
             SET manufacturer = COALESCE(NULLIF($1, ''), manufacturer),
                 model = COALESCE(NULLIF($2, ''), model),
-                serial_number = COALESCE(NULLIF($3, ''), serial_number),
-                custom_attributes = $4
-            WHERE id = $5
-        `, [manufacturer, model, serial_number, JSON.stringify(custom_attributes || {}), id]);
+                custom_attributes = $3
+            WHERE id = $4
+        `, [manufacturer, model, JSON.stringify(custom_attributes || {}), id]);
 
         res.json({ success: true });
     } catch (err) {
@@ -583,16 +647,48 @@ app.delete('/api/asset-types/:id', async (req, res) => {
 // 2b. Criar Novo Modelo de Equipamento
 app.post('/api/models', async (req, res) => {
     try {
-        const { manufacturer, name, cpu, ram, storage } = req.body;
+        const { manufacturer, name, type_id, cpu, ram, storage, inches } = req.body;
 
         const result = await pool.query(`
-            INSERT INTO hardware_models (manufacturer, name, cpu, ram, storage)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO hardware_models (manufacturer, name, type_id, cpu, ram, storage, inches)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING id;
-        `, [manufacturer, name, cpu, ram, storage]);
+        `, [manufacturer, name, type_id || null, cpu, ram, storage, inches]);
 
         res.json({ success: true, id: result.rows[0].id });
     } catch (err) {
+        console.error('Error POST /api/models', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 2c. Atualizar Modelo de Equipamento
+app.put('/api/models/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { manufacturer, name, type_id, cpu, ram, storage, inches } = req.body;
+
+        await pool.query(`
+            UPDATE hardware_models 
+            SET manufacturer = $1, name = $2, type_id = $3, cpu = $4, ram = $5, storage = $6, inches = $7
+            WHERE id = $8
+        `, [manufacturer, name, type_id || null, cpu, ram, storage, inches, id]);
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error(`Error PUT /api/models/${id}`, err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 2d. Excluir Modelo de Equipamento
+app.delete('/api/models/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query(`DELETE FROM hardware_models WHERE id = $1`, [id]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error(`Error DELETE /api/models/${id}`, err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -779,13 +875,24 @@ app.put('/api/maintenance/:id/resolve', async (req, res) => {
 
         // Atualiza o status operacional do ativo
         if (new_asset_status) {
+            const { new_user_id } = req.body;
+            
             await pool.query(`
-                UPDATE inventory_assets SET status = $1 WHERE id = $2
-            `, [new_asset_status, assetId]);
+                UPDATE inventory_assets 
+                SET status = $1, current_user_id = $2 
+                WHERE id = $3
+            `, [
+                new_asset_status, 
+                new_asset_status === 'Assigned' ? new_user_id : null, 
+                assetId
+            ]);
 
-            // Se voltou ao estoque, remove o usuário atual
-            if (new_asset_status === 'In_Stock') {
-                await pool.query(`UPDATE inventory_assets SET current_user_id = NULL WHERE id = $1`, [assetId]);
+            // Se devolver ao usuário, cria um novo registro de posse no histórico
+            if (new_asset_status === 'Assigned' && new_user_id) {
+                await pool.query(`
+                    INSERT INTO assignment_history (asset_id, user_id, justification, movement_type, assigned_by, notes)
+                    VALUES ($1, $2, $3, 'transfer', 'Admin TI / Sistema', 'Retorno de Manutenção')
+                `, [assetId, new_user_id, `Manutenção Concluída: ${resolution_notes}`]);
             }
         }
 
@@ -823,9 +930,9 @@ app.delete('/api/assets/:id', async (req, res) => {
         // Insere na tabela de histórico a justificativa da exclusão
         await pool.query(`
             INSERT INTO assignment_history (
-                asset_id, user_id, previous_user_id, justification, movement_type, assigned_by, notes
+                asset_id, user_id, previous_user_id, justification, movement_type, assigned_at, assigned_by, notes
             ) VALUES (
-                $1, NULL, $2, $3, 'deletion', 'Admin TI / Sistema', 'Exclusão Lógica do Equipamento'
+                $1, NULL, $2, $3, 'deletion', CURRENT_TIMESTAMP, 'Admin TI / Sistema', 'Exclusão Lógica do Equipamento'
             )
         `, [id, oldUserId, justification]);
 

@@ -19,9 +19,9 @@
             --success: #b2d235; /* Verde da Logo para o Success */
             --warning: #f59e0b;
             --danger: #dc2626;
-            --quanta-blue: #009fdf; /* Azul Claro */
-            --quanta-dark-blue: #1b5f8c; /* Azul Escuro da Logo */
-            --quanta-green: #b2d235; /* Verde Quanta */
+            --accent-blue: #009fdf; /* Azul Claro */
+            --accent-dark-blue: #1b5f8c; /* Azul Escuro */
+            --accent-green: #b2d235; /* Verde Destaque */
         }
 
         * {
@@ -41,7 +41,7 @@
         /* Sidebar Navigation */
         .sidebar {
             width: 260px;
-            background-color: var(--quanta-dark-blue);
+            background-color: var(--accent-dark-blue);
             color: #ffffff;
             padding: 24px;
             display: flex;
@@ -71,7 +71,7 @@
 
         .nav-link:hover,
         .nav-link.active {
-            background-color: var(--quanta-green); /* Verde de destaque */
+            background-color: var(--accent-green); /* Verde de destaque */
             color: #1b5f8c; /* Texto Azul escuro no fundo verde para contraste */
             font-weight: 700;
             box-shadow: 0 4px 12px rgba(178, 210, 53, 0.4); /* Sombra Verde */
@@ -99,6 +99,37 @@
             align-items: center;
         }
 
+        th[onclick] {
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+            transition: background-color 0.2s ease;
+            white-space: nowrap;
+        }
+
+        th[onclick]:hover {
+            background-color: #f1f5f9;
+        }
+
+        .sort-indicator {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 4px;
+            font-size: 0.7rem;
+            color: var(--primary);
+            vertical-align: middle;
+            opacity: 0.7;
+        }
+
+        th[onclick] .sort-indicator {
+            opacity: 0.4;
+        }
+
+        th[onclick]:hover .sort-indicator,
+        th[onclick] .sort-indicator.active {
+            opacity: 1;
+        }
+
         .search-bar input {
             padding: 10px 36px 10px 20px;
             border-radius: 999px; /* Arredondado moderno */
@@ -112,7 +143,7 @@
 
         .search-bar input:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(0, 159, 223, 0.2); /* Foco Azul Quanta */
+            box-shadow: 0 0 0 3px rgba(0, 159, 223, 0.2); /* Foco Azul */
         }
 
         .search-clear {
@@ -166,7 +197,7 @@
             border: none; /* Sem borda, estilo flat/moderno */
             border-radius: 16px;
             padding: 24px;
-            box-shadow: 0 4px 20px rgba(27, 95, 140, 0.08); /* Sombra Quanta Dark Blue */
+            box-shadow: 0 4px 20px rgba(27, 95, 140, 0.08); /* Sombra Dark Blue */
             transition: transform 0.2s ease;
         }
         
@@ -259,7 +290,7 @@
             width: 600px;
             height: 100vh;
             background: white;
-            box-shadow: -4px 0 32px rgba(27, 95, 140, 0.15); /* Sombra suave para o Azul Escuro Quanta */
+            box-shadow: -4px 0 32px rgba(27, 95, 140, 0.15); /* Sombra suave para o Azul Escuro */
             transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Animação mais clean */
             display: flex;
             flex-direction: column;
@@ -397,7 +428,7 @@
         }
 
         .hidden {
-            display: none;
+            display: none !important;
         }
 
         /* Multi-Page Logic */
@@ -526,7 +557,7 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="logo">
-            <span style="font-size: 1.8rem; margin-right: 8px;">🚀</span> Quanta CMDB
+            <span style="font-size: 1.8rem; margin-right: 8px;">🚀</span> ITAM CMDB
         </div>
         <div style="flex-direction: column; display: flex; gap: 8px;">
             <div class="nav-link active" onclick="switchMainView('hardware', this)">Inventário Físico</div>
@@ -588,7 +619,7 @@
                     <div class="card-value" id="stat-maint" style="color: var(--warning)">...</div>
                 </div>
                 <div class="card">
-                    <div class="card-title">Perdidos / Furtados</div>
+                    <div class="card-title">Extraviados</div>
                     <div class="card-value" id="stat-lost" style="color: var(--danger)">...</div>
                 </div>
             </div>
@@ -600,7 +631,9 @@
                             <th>Patrimônio</th>
                             <th>Modelo Regulatório</th>
                             <th>Usuário Atual</th>
-                            <th>Departamento</th>
+                            <th>Processador</th>
+                            <th>Memória</th>
+                            <th>Armazenamento</th>
                             <th>Status Operacional</th>
                         </tr>
                     </thead>
@@ -630,10 +663,10 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Software / Serviço</th>
-                            <th>Chave de Ativação / Conta</th>
-                            <th>Custo Mensal (BRL)</th>
-                            <th>Atribuído A</th>
+                            <th onclick="handleSort('licenses', 'name')">Nome do Software</th>
+                            <th onclick="handleSort('licenses', 'license_key')">Chave da Licença</th>
+                            <th onclick="handleSort('licenses', 'monthly_cost')">Custo Mensal</th>
+                            <th onclick="handleSort('licenses', 'expiry_date')">Vencimento</th>
                         </tr>
                     </thead>
                     <tbody id="licenses-tbody">
@@ -667,11 +700,11 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Matrícula</th>
-                            <th>Nome do Funcionário</th>
-                            <th>Departamento / Setor</th>
-                            <th>Email Corporativo</th>
-                            <th>Status no RH</th>
+                            <th onclick="handleSort('users', 'registration_number')">Matrícula</th>
+                            <th onclick="handleSort('users', 'name')">Nome do Funcionário</th>
+                            <th onclick="handleSort('users', 'department')">Departamento / Setor</th>
+                            <th onclick="handleSort('users', 'email')">Email Corporativo</th>
+                            <th onclick="handleSort('users', 'status')">Status no RH</th>
                         </tr>
                     </thead>
                     <tbody id="users-tbody">
@@ -714,8 +747,8 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Colaborador</th>
-                            <th>Departamento / Setor</th>
+                            <th onclick="handleSort('reports', 'name')">Colaborador</th>
+                            <th onclick="handleSort('reports', 'department')">Departamento / Setor</th>
                             <th>Equipamentos Acautelados (Em Posse)</th>
                             <th style="text-align: right;">Ações</th>
                         </tr>
@@ -737,20 +770,25 @@
             <div class="header">
                 <div>
                     <h1 style="font-size: 1.5rem; margin-bottom: 8px;">Modelos Padrões (Catálogo)</h1>
-                    <p style="color: var(--text-muted)">Padronize fabricantes, processadores, e dados técnicos de
-                        hardware.</p>
+                    <p style="color: var(--text-muted)">Padronize fabricantes, processadores, e dados técnicos de hardware.</p>
                 </div>
-                <button class="btn-primary" onclick="openModelModal()">+ Novo Modelo</button>
+                <div style="display: flex; gap: 16px;">
+                    <div class="search-bar">
+                        <input type="text" id="search-models-input" oninput="filterModels()" 
+                            placeholder="Buscar Fabricante ou Modelo...">
+                    </div>
+                    <button class="btn-primary" onclick="openModelModal()">+ Novo Modelo</button>
+                </div>
             </div>
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th>Fabricante</th>
-                            <th>Nome do Modelo</th>
-                            <th>Processador</th>
-                            <th>Memória RAM</th>
-                            <th>Armazenamento</th>
+                            <th onclick="handleSort('models', 'type_name')">Categoria</th>
+                            <th onclick="handleSort('models', 'manufacturer')">Fabricante</th>
+                            <th onclick="handleSort('models', 'name')">Nome do Modelo</th>
+                            <th>Especificações Técnicas</th>
+                            <th style="text-align: right;">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="models-tbody">
@@ -777,10 +815,10 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Patrimônio</th>
-                            <th>Fabricante e Modelo</th>
-                            <th>Data da Exclusão</th>
-                            <th>Motivo / Justificativa</th>
+                            <th onclick="handleSort('deleted', 'asset_tag')">Patrimônio</th>
+                            <th onclick="handleSort('deleted', 'model')">Fabricante e Modelo</th>
+                            <th onclick="handleSort('deleted', 'deleted_at')">Data da Exclusão</th>
+                            <th onclick="handleSort('deleted', 'justification')">Motivo / Justificativa</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
@@ -855,7 +893,14 @@
     <!-- Modal Novo Modelo(Catálogo) -->
     <div class="modal-overlay" id="addModelModalOverlay">
         <div class="modal">
-            <h2 style="margin-bottom: 24px;">Cadastrar Modelo Padrão</h2>
+            <h2 id="new-model-title" style="margin-bottom: 24px;">Cadastrar Modelo Padrão</h2>
+            <input type="hidden" id="current-model-id">
+            <div class="form-group">
+                <label class="form-label">Categoria do Modelo</label>
+                <select id="new-model-type" class="form-input" onchange="toggleModelFieldsBySelection()">
+                    <!-- Populated via JS -->
+                </select>
+            </div>
             <div class="form-group" style="display:flex; gap: 16px;">
                 <div style="flex:1">
                     <label class="form-label">Fabricante</label>
@@ -866,7 +911,7 @@
                     <input type="text" id="new-model-name" class="form-input" placeholder="Ex: Latitude 5430">
                 </div>
             </div>
-            <div class="form-group" style="display:flex; gap: 16px;">
+            <div class="form-group pc-only-model" style="display:flex; gap: 16px;">
                 <div style="flex:1">
                     <label class="form-label">Processador (CPU)</label>
                     <input type="text" id="new-model-cpu" class="form-input" placeholder="Ex: Core i5 12th">
@@ -876,14 +921,19 @@
                     <input type="text" id="new-model-ram" class="form-input" placeholder="Ex: 16GB">
                 </div>
             </div>
-            <div class="form-group">
+            <div class="form-group pc-only-model">
                 <label class="form-label">Armazenamento (SSD/HD)</label>
                 <input type="text" id="new-model-storage" class="form-input" placeholder="Ex: 512GB NVMe">
+            </div>
+
+            <div class="form-group monitor-only-model hidden">
+                <label class="form-label">Tamanho (Polegadas)</label>
+                <input type="text" id="new-model-inches" class="form-input" placeholder="Ex: 24">
             </div>
             <div style="display:flex; justify-content: flex-end; gap: 16px; margin-top: 32px;">
                 <button class="btn-primary" style="background:transparent; color: var(--text-muted);"
                     onclick="closeModelModal()">Cancelar</button>
-                <button class="btn-primary" onclick="saveNewStandardModel()">Criar Modelo</button>
+                <button class="btn-primary" id="btn-save-model" onclick="saveNewStandardModel()">Criar Modelo</button>
             </div>
         </div>
     </div>
@@ -993,7 +1043,7 @@
     <div class="detail-panel" id="assetPanel">
         <div class="panel-header">
             <div>
-                <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">NOTEBOOK</div>
+                <div id="panel-asset-type-label" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">EQUIPAMENTO</div>
                 <h2 id="panel-asset-tag" style="margin: 4px 0 8px 0; font-size: 1.8rem;">---</h2>
                 <span id="panel-assigned-to" class="tag assigned">---</span>
             </div>
@@ -1016,16 +1066,18 @@
                     <button class="btn-primary" style="background: transparent; border: 1px solid var(--border); color: var(--text-main); font-size:0.85rem; padding: 6px 14px;" onclick="openSpecsModal()">✏️ Editar</button>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px;">
-                    <div><span style="color: var(--text-muted); font-size:0.85rem">Número de Série</span><br><strong
-                            id="spec-serial">-</strong></div>
                     <div><span style="color: var(--text-muted); font-size:0.85rem">Modelo</span><br><strong
                             id="spec-model">-</strong></div>
-                    <div><span style="color: var(--text-muted); font-size:0.85rem">Processador</span><br><strong
+                    
+                    <div class="pc-only"><span style="color: var(--text-muted); font-size:0.85rem">Processador</span><br><strong
                             id="spec-cpu">-</strong></div>
-                    <div><span style="color: var(--text-muted); font-size:0.85rem">Memória RAM</span><br><strong
+                    <div class="pc-only"><span style="color: var(--text-muted); font-size:0.85rem">Memória RAM</span><br><strong
                             id="spec-ram">-</strong></div>
-                    <div><span style="color: var(--text-muted); font-size:0.85rem">Armazenamento
+                    <div class="pc-only"><span style="color: var(--text-muted); font-size:0.85rem">Armazenamento
                             HD/SSD</span><br><strong id="spec-storage">-</strong></div>
+                    
+                    <div class="monitor-only hidden"><span style="color: var(--text-muted); font-size:0.85rem">Tamanho (Polegadas)</span><br><strong
+                            id="spec-inches">-</strong></div>
                 </div>
 
                 <h3 style="margin-bottom: 16px; margin-top: 32px;">Ações Administrativas</h3>
@@ -1082,8 +1134,14 @@
             </div>
 
             <h3 style="margin-bottom: 16px; margin-top: 32px;">Equipamentos em Posse</h3>
-            <div id="user-assets-container" style="display: flex; flex-direction: column; gap: 10px;">
+            <div id="user-assets-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px;">
                 <!-- Preenchido via JS -->
+            </div>
+
+            <div style="border-top: 1px solid var(--border); padding-top: 24px;">
+                <button class="btn-primary" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; width: 100%;" onclick="deleteUser()">
+                    🗑️ Excluir Colaborador
+                </button>
             </div>
         </div>
     </div>
@@ -1137,20 +1195,19 @@
             <div class="form-group" style="display:flex; gap:16px;">
                 <div style="flex:1">
                     <label class="form-label">Fabricante</label>
-                    <input type="text" id="edit-manufacturer" class="form-input" placeholder="Ex: Dell">
+                    <select id="edit-manufacturer" class="form-input" onchange="filterEditSpecsModels()">
+                        <option value="">Selecione...</option>
+                    </select>
                 </div>
                 <div style="flex:1">
                     <label class="form-label">Modelo</label>
-                    <input type="text" id="edit-model" class="form-input" placeholder="Ex: Latitude 5430">
+                    <select id="edit-model" class="form-input" onchange="applyStandardSpecsToEdit()">
+                        <option value="">Selecione o Fabricante primeiro</option>
+                    </select>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Número de Série</label>
-                <input type="text" id="edit-serial" class="form-input" placeholder="Ex: 4XRTB12">
-            </div>
-
-            <div class="form-group" style="display:flex; gap:16px;">
+            <div class="form-group pc-only" style="display:flex; gap:16px;">
                 <div style="flex:1">
                     <label class="form-label">Processador (CPU)</label>
                     <input type="text" id="edit-cpu" class="form-input" placeholder="Ex: Intel i5-12th">
@@ -1160,10 +1217,14 @@
                     <input type="text" id="edit-ram" class="form-input" placeholder="Ex: 16GB">
                 </div>
             </div>
-
-            <div class="form-group">
+            <div class="form-group pc-only">
                 <label class="form-label">Armazenamento (SSD/HD)</label>
                 <input type="text" id="edit-storage" class="form-input" placeholder="Ex: 512GB NVMe">
+            </div>
+
+            <div class="form-group monitor-only hidden">
+                <label class="form-label">Tamanho (Polegadas)</label>
+                <input type="text" id="edit-inches" class="form-input" placeholder="Ex: 21.5">
             </div>
 
             <div style="display:flex; justify-content:flex-end; gap:16px; margin-top:32px;">
@@ -1211,7 +1272,7 @@
                 <select id="transfer-status" class="form-input" onchange="toggleTransferOwner()">
                     <option value="In_Stock">No Estoque (Almoxarifado)</option>
                     <option value="Assigned">Já Entregue a Usuário</option>
-                    <option value="Lost">Perdido / Furtado</option>
+                    <option value="Lost">Extraviado</option>
                 </select>
             </div>
 
@@ -1347,8 +1408,75 @@
     <script>
         // Memória para busca Rápida
         let globalAssets = [];
+        let globalAssetTypes = [];
         let globalStandardModels = [];
         let globalReportsData = [];
+        let globalUsers = [];
+        let globalLicenses = [];
+        let globalDeletedAssets = [];
+
+        // Estado Global de Ordenação
+        const sortState = {
+            hardware: { col: 'asset_tag', asc: true },
+            users: { col: 'name', asc: true },
+            models: { col: 'manufacturer', asc: true },
+            licenses: { col: 'name', asc: true },
+            reports: { col: 'name', asc: true },
+            deleted: { col: 'deleted_at', asc: false }
+        };
+
+        function sortTable(data, view) {
+            const { col, asc } = sortState[view];
+            if (!col) return data;
+
+            return [...data].sort((a, b) => {
+                let valA = a[col];
+                let valB = b[col];
+
+                // Check custom_attributes if not found at root
+                if (valA === undefined && a.custom_attributes) valA = a.custom_attributes[col];
+                if (valB === undefined && b.custom_attributes) valB = b.custom_attributes[col];
+
+                valA = valA || '';
+                valB = valB || '';
+
+                // Handle dates
+                if (col === 'deleted_at' || col === 'purchase_date' || col === 'expiry_date') {
+                    valA = valA ? new Date(valA).getTime() : 0;
+                    valB = valB ? new Date(valB).getTime() : 0;
+                } else if (typeof valA === 'string') {
+                    valA = valA.toLowerCase();
+                    valB = valB.toLowerCase();
+                }
+
+                if (valA < valB) return asc ? -1 : 1;
+                if (valA > valB) return asc ? 1 : -1;
+                return 0;
+            });
+        }
+
+        function getSortIcon(view, col) {
+            const isActive = sortState[view] && sortState[view].col === col;
+            const cls = isActive ? 'sort-indicator active' : 'sort-indicator';
+            if (!isActive) return `<span class="${cls}">↕</span>`;
+            return `<span class="${cls}">${sortState[view].asc ? '▲' : '▼'}</span>`;
+        }
+
+        function handleSort(view, col) {
+            if (sortState[view].col === col) {
+                sortState[view].asc = !sortState[view].asc;
+            } else {
+                sortState[view].col = col;
+                sortState[view].asc = true;
+            }
+
+            if (view === 'hardware') filterAssets();
+            if (view === 'users') renderUsersTable();
+            if (view === 'models') filterModels();
+            if (view === 'licenses') renderLicensesTable();
+            if (view === 'reports') renderReportsGrid();
+            if (view === 'deleted') renderDeletedAssets();
+        }
 
         // Funcionalidade de Menu
         function switchMainView(viewId, triggerElement) {
@@ -1423,6 +1551,7 @@
         async function loadAssetTypes() {
             const res = await fetch('/api/asset-types');
             const globals = await res.json();
+            globalAssetTypes = globals; // Store globally
 
             const submenu = document.getElementById('hardware-submenu');
             const select = document.getElementById('add-type');
@@ -1504,7 +1633,7 @@
             if (statusStr === 'In_Stock' || statusStr === 'Em estoque') return 'Em Estoque';
             if (statusStr === 'Assigned' || statusStr === 'Em Uso') return 'Em Uso';
             if (statusStr === 'Maintenance' || statusStr === 'Em Manutencao') return 'Manutenção';
-            if (statusStr === 'Lost' || statusStr === 'Perdido' || statusStr === 'Furtado') return 'Perdido/Furtado';
+            if (statusStr === 'Lost' || statusStr === 'Perdido' || statusStr === 'Furtado') return 'Extraviado';
             if (statusStr === 'Desativado') return 'Desativado';
             return statusStr;
         }
@@ -1520,11 +1649,14 @@
             clearBtn.style.display = term.length > 0 ? 'flex' : 'none';
 
             // Filtra os itens em memória por categoria e texto
-            const results = globalAssets.filter(asset => {
+            let results = globalAssets.filter(asset => {
                 if (currentTypeFilter && asset.type_id !== currentTypeFilter) return false;
                 const searchString = `${asset.asset_tag || ''} ${asset.model || ''} ${asset.current_user || ''} ${asset.department || ''} ${translateStatus(asset.status)}`.toLowerCase();
                 return searchString.includes(term);
             });
+
+            // Ordenação
+            results = sortTable(results, 'hardware');
 
             // ------ Recalcula os cards do dashboard com base no filtro ------
             const typeAssets = currentTypeFilter
@@ -1541,15 +1673,29 @@
             document.getElementById('stat-maint').innerText = statsMaint;
             document.getElementById('stat-lost').innerText  = statsLost;
 
-            // Atualiza o rótulo do primeiro card
-            if (currentTypeFilter) {
-                const activeLink = document.querySelector('#hardware-submenu .nav-link[style*="font-weight: 700"], #hardware-submenu .nav-link[style*="font-weight:700"]');
-                const categoryName = activeLink ? activeLink.innerText.trim() : 'Categoria';
-                document.getElementById('stat-total-label').innerText = `Total de ${categoryName}`;
+            // ------ Atualiza Dinamicamente o Cabeçalho da Tabela ------
+            const thead = document.querySelector('#view-hardware table thead tr');
+            const isMonitor = currentTypeFilter && globalAssetTypes.find(t => t.id === currentTypeFilter)?.name.toLowerCase().includes('monitor');
+
+            if (isMonitor) {
+                thead.innerHTML = `
+                    <th onclick="handleSort('hardware', 'asset_tag')">Patrimônio ${getSortIcon('hardware', 'asset_tag')}</th>
+                    <th onclick="handleSort('hardware', 'model')">Modelo Regulatório ${getSortIcon('hardware', 'model')}</th>
+                    <th onclick="handleSort('hardware', 'current_user')">Usuário Atual ${getSortIcon('hardware', 'current_user')}</th>
+                    <th onclick="handleSort('hardware', 'inches')">Tamanho (Polegadas) ${getSortIcon('hardware', 'inches')}</th>
+                    <th onclick="handleSort('hardware', 'status')">Status Operacional ${getSortIcon('hardware', 'status')}</th>
+                `;
             } else {
-                document.getElementById('stat-total-label').innerText = 'Total de Equipamentos';
+                thead.innerHTML = `
+                    <th onclick="handleSort('hardware', 'asset_tag')">Patrimônio ${getSortIcon('hardware', 'asset_tag')}</th>
+                    <th onclick="handleSort('hardware', 'model')">Modelo Regulatório ${getSortIcon('hardware', 'model')}</th>
+                    <th onclick="handleSort('hardware', 'current_user')">Usuário Atual ${getSortIcon('hardware', 'current_user')}</th>
+                    <th onclick="handleSort('hardware', 'cpu')">Processador ${getSortIcon('hardware', 'cpu')}</th>
+                    <th onclick="handleSort('hardware', 'ram')">Memória ${getSortIcon('hardware', 'ram')}</th>
+                    <th onclick="handleSort('hardware', 'storage')">Armazenamento ${getSortIcon('hardware', 'storage')}</th>
+                    <th onclick="handleSort('hardware', 'status')">Status Operacional ${getSortIcon('hardware', 'status')}</th>
+                `;
             }
-            // ---------------------------------------------------------------
 
             // Re-renderiza a tabela
             if (results.length === 0) {
@@ -1565,12 +1711,25 @@
                 else if (asset.status === 'Lost' || asset.status === 'Perdido' || asset.status === 'Furtado') tagClass = 'tag broken';
                 else if (asset.status === 'Desativado') tagClass = 'tag terminated';
 
+                const specs = asset.custom_attributes || {};
+                
+                let specsCells = '';
+                if (isMonitor) {
+                    specsCells = `<td>${specs.inches || '-'} "</td>`;
+                } else {
+                    specsCells = `
+                        <td style="font-size: 0.85rem; color: var(--text-muted)">${specs.cpu || '-'}</td>
+                        <td style="font-size: 0.85rem; color: var(--text-muted)">${specs.ram || '-'}</td>
+                        <td style="font-size: 0.85rem; color: var(--text-muted)">${specs.storage || '-'}</td>
+                    `;
+                }
+
                 html += `
                     <tr onclick="loadAssetDetails('${asset.id}')">
                         <td style="font-weight:600; color:var(--primary)">${asset.asset_tag}</td>
                         <td>${asset.model}</td>
                         <td>${asset.current_user || '<i><small>Estoque/GTI</small></i>'}</td>
-                        <td>${asset.department || '-'}</td>
+                        ${specsCells}
                         <td><span class="${tagClass}">${translateStatus(asset.status)}</span></td>
                     </tr>
                 `;
@@ -1619,40 +1778,148 @@
 
         async function loadModelsTable() {
             await fetchStandardModels();
+            filterModels();
+        }
+
+        function filterModels() {
+            const query = document.getElementById('search-models-input').value.toLowerCase();
             const tbody = document.getElementById('models-tbody');
+            const thead = document.querySelector('#view-models table thead');
+            
+            thead.innerHTML = `
+                <tr>
+                    <th onclick="handleSort('models', 'type_name')">Categoria ${getSortIcon('models', 'type_name')}</th>
+                    <th onclick="handleSort('models', 'manufacturer')">Fabricante ${getSortIcon('models', 'manufacturer')}</th>
+                    <th onclick="handleSort('models', 'name')">Nome do Modelo ${getSortIcon('models', 'name')}</th>
+                    <th>Especificações Técnicas</th>
+                    <th style="text-align: right;">Ações</th>
+                </tr>
+            `;
+            
+            let filtered = globalStandardModels.filter(m => 
+                m.manufacturer.toLowerCase().includes(query) || 
+                m.name.toLowerCase().includes(query) ||
+                (m.type_name && m.type_name.toLowerCase().includes(query))
+            );
+
+            // Ordenação
+            filtered = sortTable(filtered, 'models');
+
             let html = '';
-            if (globalStandardModels.length === 0) {
-                html = '<tr><td colspan="5" style="text-align:center;color:#64748b;padding: 32px;">Nenhum modelo cadastrado.</td></tr>';
+            if (filtered.length === 0) {
+                html = '<tr><td colspan="5" style="text-align:center;color:#64748b;padding: 32px;">Nenhum modelo encontrado.</td></tr>';
             } else {
-                globalStandardModels.forEach(m => {
+                filtered.forEach(m => {
+                    const isMonitor = m.type_name?.toLowerCase().includes('monitor');
+                    
+                    let specs = '';
+                    if (isMonitor) {
+                        specs = `<span style="color:var(--text-muted)">Tamanho:</span> <strong>${m.inches || '-'} "</strong>`;
+                    } else {
+                        specs = `<div style="font-size: 0.85rem; line-height: 1.4;">
+                            <span style="color:var(--text-muted)">CPU:</span> ${m.cpu || '-'}<br>
+                            <span style="color:var(--text-muted)">RAM:</span> ${m.ram || '-'}<br>
+                            <span style="color:var(--text-muted)">Disco:</span> ${m.storage || '-'}
+                        </div>`;
+                    }
+
                     html += `<tr>
+                        <td><span class="tag stock" style="background:#f1f5f9; color:var(--text-main); border:1px solid var(--border)">${m.type_name || 'N/A'}</span></td>
                         <td style="font-weight:600">${m.manufacturer}</td>
                         <td>${m.name}</td>
-                        <td>${m.cpu || '-'}</td>
-                        <td>${m.ram || '-'}</td>
-                        <td>${m.storage || '-'}</td>
+                        <td>${specs}</td>
+                        <td style="text-align: right;">
+                            <button class="btn-primary" style="background:transparent; border:1px solid var(--border); color:var(--text-main); font-size:0.75rem; padding:4px 10px;" onclick="editModel(${m.id})">✏️</button>
+                            <button class="btn-primary" style="background:transparent; border:1px solid var(--border); color:var(--danger); font-size:0.75rem; padding:4px 10px;" onclick="deleteModel(${m.id})">🗑️</button>
+                        </td>
                     </tr>`;
                 });
             }
             tbody.innerHTML = html;
         }
 
-        function openModelModal() { document.getElementById('addModelModalOverlay').style.display = 'flex'; }
+        function toggleModelFieldsBySelection() {
+            const typeId = parseInt(document.getElementById('new-model-type').value);
+            const typeObj = globalAssetTypes.find(t => t.id === typeId);
+            const isMonitor = typeObj?.name.toLowerCase().includes('monitor');
+            
+            const pcRows = document.querySelectorAll('.pc-only-model');
+            const monitorRows = document.querySelectorAll('.monitor-only-model');
+
+            if (isMonitor) {
+                pcRows.forEach(el => el.classList.add('hidden'));
+                monitorRows.forEach(el => el.classList.remove('hidden'));
+            } else {
+                pcRows.forEach(el => el.classList.remove('hidden'));
+                monitorRows.forEach(el => el.classList.add('hidden'));
+            }
+        }
+
+        function openModelModal(modelData = null) {
+            const titleEl = document.getElementById('new-model-title');
+            const saveBtn = document.getElementById('btn-save-model');
+            const idInput = document.getElementById('current-model-id');
+            const typeSelect = document.getElementById('new-model-type');
+
+            // Populate type select
+            let typeOpts = globalAssetTypes.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            typeSelect.innerHTML = typeOpts;
+
+            if (modelData) {
+                titleEl.innerText = "Editar Modelo Padrão";
+                saveBtn.innerText = "Salvar Alterações";
+                idInput.value = modelData.id;
+                typeSelect.value = modelData.type_id;
+                
+                document.getElementById('new-model-manuf').value = modelData.manufacturer;
+                document.getElementById('new-model-name').value = modelData.name;
+                document.getElementById('new-model-cpu').value = modelData.cpu || '';
+                document.getElementById('new-model-ram').value = modelData.ram || '';
+                document.getElementById('new-model-storage').value = modelData.storage || '';
+                document.getElementById('new-model-inches').value = modelData.inches || '';
+
+                toggleModelFieldsBySelection();
+            } else {
+                titleEl.innerText = "Cadastrar Modelo Padrão";
+                saveBtn.innerText = "Criar Modelo";
+                idInput.value = "";
+                
+                document.getElementById('new-model-manuf').value = '';
+                document.getElementById('new-model-name').value = '';
+                document.getElementById('new-model-cpu').value = '';
+                document.getElementById('new-model-ram').value = '';
+                document.getElementById('new-model-storage').value = '';
+                document.getElementById('new-model-inches').value = '';
+                
+                toggleModelFieldsBySelection();
+            }
+
+            document.getElementById('addModelModalOverlay').style.display = 'flex';
+        }
         function closeModelModal() { document.getElementById('addModelModalOverlay').style.display = 'none'; }
 
         async function saveNewStandardModel() {
+            const modelId = document.getElementById('current-model-id').value;
+            
             const payload = {
                 manufacturer: document.getElementById('new-model-manuf').value.trim(),
                 name: document.getElementById('new-model-name').value.trim(),
+                type_id: parseInt(document.getElementById('new-model-type').value),
                 cpu: document.getElementById('new-model-cpu').value.trim(),
                 ram: document.getElementById('new-model-ram').value.trim(),
-                storage: document.getElementById('new-model-storage').value.trim()
+                storage: document.getElementById('new-model-storage').value.trim(),
+                inches: document.getElementById('new-model-inches').value.trim()
             };
+
             if (!payload.manufacturer || !payload.name) {
                 alert('Fabricante e Nome do Modelo são obrigatórios.'); return;
             }
-            await fetch('/api/models', {
-                method: 'POST',
+
+            const url = modelId ? `/api/models/${modelId}` : '/api/models';
+            const method = modelId ? 'PUT' : 'POST';
+
+            await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
@@ -1661,8 +1928,29 @@
             document.getElementById('new-model-cpu').value = '';
             document.getElementById('new-model-ram').value = '';
             document.getElementById('new-model-storage').value = '';
+            document.getElementById('new-model-inches').value = '';
+            document.getElementById('current-model-id').value = '';
             closeModelModal();
             loadModelsTable();
+        }
+
+        function editModel(id) {
+            const model = globalStandardModels.find(m => m.id === id);
+            if (model) openModelModal(model);
+        }
+
+        async function deleteModel(id) {
+            if (!confirm('Tem certeza que deseja excluir este modelo do catálogo?')) return;
+            try {
+                const res = await fetch(`/api/models/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    loadModelsTable();
+                } else {
+                    alert('Erro ao excluir modelo.');
+                }
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         function populateFormManufs() {
@@ -1690,6 +1978,51 @@
                 });
             }
             document.getElementById('add-model').innerHTML = opts;
+        }
+
+        function populateEditManufacturers() {
+            let manufs = new Set();
+            globalStandardModels.forEach(m => manufs.add(m.manufacturer));
+            let opts = '<option value="">-- Selecione Fabricante --</option>';
+            Array.from(manufs).sort().forEach(mf => {
+                opts += `<option value="${mf}">${mf}</option>`;
+            });
+            opts += '<option value="Outro">Outro (Inserir Manual)</option>';
+            document.getElementById('edit-manufacturer').innerHTML = opts;
+        }
+
+        function filterEditSpecsModels() {
+            const mf = document.getElementById('edit-manufacturer').value;
+            let opts = '<option value="">-- Selecione o Modelo --</option>';
+
+            if (mf === 'Outro') {
+                opts = '<option value="Desconhecido">Modelo Genérico ou Específico</option>';
+            } else {
+                const filtered = globalStandardModels.filter(m => m.manufacturer === mf);
+                filtered.forEach(m => {
+                    opts += `<option value="${m.id}">${m.name}</option>`;
+                });
+            }
+            document.getElementById('edit-model').innerHTML = opts;
+        }
+
+        function applyStandardSpecsToEdit() {
+            const modelId = document.getElementById('edit-model').value;
+            if (!modelId || modelId === 'Desconhecido') return;
+
+            const selModel = globalStandardModels.find(m => m.id == modelId);
+            if (selModel) {
+                const typeLabel = document.getElementById('panel-asset-type-label').innerText.toLowerCase();
+                const isMonitor = typeLabel.includes('monitor');
+                
+                if (isMonitor && selModel.inches) {
+                    document.getElementById('edit-inches').value = selModel.inches;
+                } else if (!isMonitor) {
+                    if (selModel.cpu) document.getElementById('edit-cpu').value = selModel.cpu;
+                    if (selModel.ram) document.getElementById('edit-ram').value = selModel.ram;
+                    if (selModel.storage) document.getElementById('edit-storage').value = selModel.storage;
+                }
+            }
         }
 
         // Painel Lateral de Usuário
@@ -1786,43 +2119,75 @@
             }
         };
 
+        window.deleteUser = async function() {
+            const id = document.getElementById('edit-user-id').value;
+            const name = document.getElementById('panel-user-name').innerText;
+            
+            if (!id) return;
+            if (!confirm(`Tem certeza que deseja excluir o colaborador "${name}"? Esta ação não pode ser desfeita.`)) return;
+
+            try {
+                const res = await fetch(`/api/users/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (res.ok) {
+                    window.closeUserPanel();
+                    loadUsersTable();
+                    alert('Colaborador excluído com sucesso.');
+                } else {
+                    const err = await res.json();
+                    alert(err.error || 'Erro ao excluir colaborador.');
+                }
+            } catch (err) {
+                console.error('Erro ao excluir usuário:', err);
+                alert('Erro na conexão com o servidor.');
+            }
+        };
+
         // Carrega Usuários do Banco e renderiza na Tela de RH
         async function loadUsersTable() {
-            console.log('📊 Carregando tabela de funcionários via DOM API...');
             try {
-                const tbody = document.getElementById('users-tbody');
                 const res = await fetch('/api/users');
-                const users = await res.json();
-
-                tbody.innerHTML = ''; // Limpa a tabela
-
-                users.forEach(u => {
-                    const tr = document.createElement('tr');
-                    tr.style.cursor = 'pointer';
-                    
-                    let statusTag = u.status === 'Active' ? '<span class="tag assigned">Ativo</span>' : '<span class="tag terminated">Desligado</span>';
-                    
-                    tr.innerHTML = `
-                        <td style="color: var(--text-muted); font-family: monospace;">${u.registration_number || '-'}</td>
-                        <td style="font-weight:600; color: var(--text-main);">${u.name}</td>
-                        <td>${u.department || 'A Definir'}</td>
-                        <td>${u.email || '-'}</td>
-                        <td>${statusTag}</td>
-                    `;
-
-                    // Anexa o evento de clique de forma robusta
-                    tr.addEventListener('click', () => {
-                        console.log('🖱️ Clique detectado na linha do usuário:', u.name, '(ID:', u.id, ')');
-                        window.loadUserDetails(u.id);
-                    });
-
-                    tbody.appendChild(tr);
-                });
-                console.log(`✅ Tabela renderizada com ${users.length} funcionários.`);
-
+                globalUsers = await res.json();
+                renderUsersTable();
             } catch (err) {
-                console.error('Erro ao carregar Funcionários', err);
+                console.error('Erro ao carregar funcionários', err);
             }
+        }
+
+        function renderUsersTable() {
+            const tbody = document.getElementById('users-tbody');
+            const thead = document.querySelector('#view-users table thead');
+            const sorted = sortTable(globalUsers, 'users');
+            
+            thead.innerHTML = `
+                <tr>
+                    <th onclick="handleSort('users', 'registration_number')">Matrícula ${getSortIcon('users', 'registration_number')}</th>
+                    <th onclick="handleSort('users', 'name')">Nome do Funcionário ${getSortIcon('users', 'name')}</th>
+                    <th onclick="handleSort('users', 'department')">Departamento / Setor ${getSortIcon('users', 'department')}</th>
+                    <th onclick="handleSort('users', 'email')">Email Corporativo ${getSortIcon('users', 'email')}</th>
+                    <th onclick="handleSort('users', 'status')">Status no RH ${getSortIcon('users', 'status')}</th>
+                </tr>
+            `;
+
+            tbody.innerHTML = '';
+            sorted.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
+                let statusTag = u.status === 'Active' ? '<span class="tag assigned">Ativo</span>' : '<span class="tag terminated">Desligado</span>';
+                
+                tr.innerHTML = `
+                    <td style="color: var(--text-muted); font-family: monospace;">${u.registration_number || '-'}</td>
+                    <td style="font-weight:600; color: var(--text-main);">${u.name}</td>
+                    <td>${u.department || 'A Definir'}</td>
+                    <td>${u.email || '-'}</td>
+                    <td>${statusTag}</td>
+                `;
+
+                tr.addEventListener('click', () => window.loadUserDetails(u.id));
+                tbody.appendChild(tr);
+            });
         }
 
         function openUserModal() { document.getElementById('addUserModalOverlay').style.display = 'flex'; }
@@ -1868,46 +2233,58 @@
         // Carrega Matriz Relacional Usuário vs Posse
         async function loadReportsGrid() {
             try {
-                const tbody = document.getElementById('reports-users-tbody');
                 const res = await fetch('/api/reports/user-assets');
-                const gridData = await res.json();
-
-                globalReportsData = gridData; // Atualiza a store global para o mapa mental
-
-                let html = '';
-                gridData.forEach(user => {
-                    let assetsHtml = '';
-                    if (user.assets && user.assets.length > 0) {
-                        user.assets.forEach(a => {
-                            assetsHtml += `<div style="margin-bottom:4px">
-                                                <span class="tag stock" style="font-size:0.7rem">${a.type}</span> 
-                                                <strong>${a.tag}</strong> - <span style="font-size:0.85rem">${a.model}</span>
-                                           </div>`;
-                        });
-                    } else {
-                        assetsHtml = `<i style="color: var(--text-muted); font-size: 0.85rem;">Nenhum equipamento logado</i>`;
-                    }
-
-                    html += `<tr onclick="openMindMap('${user.id}')" title="Clique para ver o Mapa Mental">
-                        <td style="font-weight:600; color: var(--text-main); vertical-align:top;">
-                            ${user.name}<br>
-                            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight:400">${user.email || '-'}</span>
-                        </td>
-                        <td style="vertical-align:top;">${user.department || 'A Definir'}</td>
-                        <td style="vertical-align:top;">${assetsHtml}</td>
-                        <td style="vertical-align:top; text-align: right;">
-                            <button class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem; background: white; color: var(--text-main); border: 1px solid var(--border); box-shadow: none;" 
-                                onclick="event.stopPropagation(); window.location.href='/api/reports/generate-term/' + '${user.id}'">
-                                📄 Gerar Termo
-                            </button>
-                        </td>
-                    </tr>`;
-                });
-                tbody.innerHTML = html;
-
+                globalReportsData = await res.json();
+                renderReportsGrid();
             } catch (err) {
-                console.error('Erro ao carregar Grade Relacional', err);
+                console.error('Erro ao carregar Matriz Relacional', err);
             }
+        }
+
+        function renderReportsGrid() {
+            const tbody = document.getElementById('reports-users-tbody');
+            const thead = document.querySelector('#view-reports table thead');
+            const sorted = sortTable(globalReportsData, 'reports');
+            
+            thead.innerHTML = `
+                <tr>
+                    <th onclick="handleSort('reports', 'name')">Colaborador ${getSortIcon('reports', 'name')}</th>
+                    <th onclick="handleSort('reports', 'department')">Departamento / Setor ${getSortIcon('reports', 'department')}</th>
+                    <th>Equipamentos Acautelados (Em Posse)</th>
+                    <th style="text-align: right;">Ações</th>
+                </tr>
+            `;
+            
+            let html = '';
+            sorted.forEach(user => {
+                let assetsHtml = '';
+                if (user.assets && user.assets.length > 0) {
+                    user.assets.forEach(a => {
+                        assetsHtml += `<div style="margin-bottom:4px">
+                                            <span class="tag stock" style="font-size:0.7rem">${a.type}</span> 
+                                            <strong>${a.tag}</strong> - <span style="font-size:0.85rem">${a.model}</span>
+                                       </div>`;
+                    });
+                } else {
+                    assetsHtml = `<i style="color: var(--text-muted); font-size: 0.85rem;">Nenhum equipamento logado</i>`;
+                }
+
+                html += `<tr onclick="openMindMap('${user.id}')" title="Clique para ver o Mapa Mental">
+                    <td style="font-weight:600; color: var(--text-main); vertical-align:top;">
+                        ${user.name}<br>
+                        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight:400">${user.email || '-'}</span>
+                    </td>
+                    <td style="vertical-align:top;">${user.department || 'A Definir'}</td>
+                    <td style="vertical-align:top;">${assetsHtml}</td>
+                    <td style="vertical-align:top; text-align: right;">
+                        <button class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem; background: white; color: var(--text-main); border: 1px solid var(--border); box-shadow: none;" 
+                            onclick="event.stopPropagation(); window.location.href='/api/reports/generate-term/' + '${user.id}'">
+                            📄 Gerar Termo
+                        </button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
         }
 
         function openMindMap(userId) {
@@ -1961,34 +2338,91 @@
 
         async function loadDeletedAssets() {
             try {
-                const tbody = document.getElementById('deleted-assets-tbody');
                 const res = await fetch('/api/assets/deleted');
-                const assets = await res.json();
-
-                let html = '';
-                if (assets.length === 0) {
-                    html = '<tr><td colspan="5" style="text-align:center;color:#64748b;padding:32px;">Nenhuma máquina excluída encontrada.</td></tr>';
-                } else {
-                    assets.forEach(a => {
-                        let dateStr = a.deleted_at ? new Date(a.deleted_at).toLocaleDateString('pt-BR') : '-';
-                        html += `<tr>
-                            <td style="font-weight:600; color:var(--danger)">${a.asset_tag}</td>
-                            <td>${a.manufacturer} ${a.model}</td>
-                            <td>${dateStr}</td>
-                            <td><div style="font-size: 0.85rem; max-width: 300px; line-height: 1.4">${a.justification || '-'}</div></td>
-                            <td>
-                                <button onclick="restoreAsset('${a.id}', '${a.asset_tag}')"
-                                    style="background:#16a34a; color:white; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-size:0.8rem;">
-                                    ↩ Restaurar
-                                </button>
-                            </td>
-                        </tr>`;
-                    });
-                }
-                tbody.innerHTML = html;
+                globalDeletedAssets = await res.json();
+                renderDeletedAssets();
             } catch (err) {
                 console.error('Erro ao carregar máquinas excluídas', err);
             }
+        }
+
+        function renderDeletedAssets() {
+            const tbody = document.getElementById('deleted-assets-tbody');
+            const thead = document.querySelector('#view-deleted table thead');
+            const sorted = sortTable(globalDeletedAssets, 'deleted');
+
+            thead.innerHTML = `
+                <tr>
+                    <th onclick="handleSort('deleted', 'asset_tag')">Patrimônio ${getSortIcon('deleted', 'asset_tag')}</th>
+                    <th onclick="handleSort('deleted', 'model')">Fabricante e Modelo ${getSortIcon('deleted', 'model')}</th>
+                    <th onclick="handleSort('deleted', 'deleted_at')">Data da Exclusão ${getSortIcon('deleted', 'deleted_at')}</th>
+                    <th onclick="handleSort('deleted', 'justification')">Motivo / Justificativa ${getSortIcon('deleted', 'justification')}</th>
+                    <th>Ações</th>
+                </tr>
+            `;
+
+            let html = '';
+            if (sorted.length === 0) {
+                html = '<tr><td colspan="5" style="text-align:center;color:#64748b;padding:32px;">Nenhuma máquina excluída encontrada.</td></tr>';
+            } else {
+                sorted.forEach(a => {
+                    let dateStr = a.deleted_at ? new Date(a.deleted_at).toLocaleDateString('pt-BR') : '-';
+                    html += `<tr>
+                        <td style="font-weight:600; color:var(--danger)">${a.asset_tag}</td>
+                        <td>${a.manufacturer} ${a.model}</td>
+                        <td>${dateStr}</td>
+                        <td><div style="font-size: 0.85rem; max-width: 300px; line-height: 1.4">${a.justification || '-'}</div></td>
+                        <td>
+                            <button onclick="restoreAsset('${a.id}', '${a.asset_tag}')"
+                                style="background:#16a34a; color:white; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-size:0.8rem;">
+                                ↩ Restaurar
+                            </button>
+                        </td>
+                    </tr>`;
+                });
+            }
+            tbody.innerHTML = html;
+        }
+
+        async function loadLicensesTable() {
+            try {
+                const res = await fetch('/api/licenses');
+                globalLicenses = await res.json();
+                renderLicensesTable();
+            } catch (err) {
+                console.error('Erro ao carregar licenças', err);
+            }
+        }
+
+        function renderLicensesTable() {
+            const tbody = document.getElementById('licenses-tbody');
+            const thead = document.querySelector('#view-licenses table thead');
+            const sorted = sortTable(globalLicenses, 'licenses');
+
+            thead.innerHTML = `
+                <tr>
+                    <th onclick="handleSort('licenses', 'name')">Nome do Software ${getSortIcon('licenses', 'name')}</th>
+                    <th onclick="handleSort('licenses', 'license_key')">Chave da Licença ${getSortIcon('licenses', 'license_key')}</th>
+                    <th onclick="handleSort('licenses', 'monthly_cost')">Custo Mensal ${getSortIcon('licenses', 'monthly_cost')}</th>
+                    <th onclick="handleSort('licenses', 'expiry_date')">Vencimento ${getSortIcon('licenses', 'expiry_date')}</th>
+                </tr>
+            `;
+
+            let html = '';
+            if (sorted.length === 0) {
+                html = '<tr><td colspan="4" style="text-align:center;color:#64748b;padding:32px;">Nenhuma licença encontrada.</td></tr>';
+            } else {
+                sorted.forEach(l => {
+                    let dateStr = l.expiry_date ? new Date(l.expiry_date).toLocaleDateString('pt-BR') : '-';
+                    html += `<tr>
+                        <td style="font-weight:600; color:var(--primary)">${l.name}</td>
+                        <td style="font-family: monospace; font-size: 0.85rem;">${l.license_key || '-'}</td>
+                        <td>R$ ${parseFloat(l.monthly_cost || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                        <td>${dateStr}</td>
+                    </tr>`;
+                });
+            }
+            tbody.innerHTML = html;
         }
 
         async function restoreAsset(assetId, assetTag) {
@@ -2037,7 +2471,7 @@
                     assignedMsg = "Retido na Assistência: ";
                     statusBadgeClass = 'tag broken'; // vermelho
                 } else if (asset.status === 'Lost' || asset.status === 'Perdido' || asset.status === 'Furtado') {
-                    assignedMsg = "Perdido/Furtado: ";
+                    assignedMsg = "Extraviado: ";
                     statusBadgeClass = 'tag broken'; // vermelho
                 } else if (asset.status === 'Desativado') {
                     assignedMsg = "Desativado: ";
@@ -2047,12 +2481,36 @@
                 badge.className = statusBadgeClass;
                 badge.innerHTML = assignedMsg + (asset.current_user_name || 'Almoxarifado T.I');
 
-                document.getElementById('spec-serial').innerText = asset.serial_number;
-                document.getElementById('spec-model').innerText = asset.manufacturer + ' ' + asset.model;
+                const typeObj = globalAssetTypes.find(t => t.id === asset.type_id);
+                const typeName = typeObj ? typeObj.name : 'Equipamento';
+                document.getElementById('panel-asset-type-label').innerText = typeName;
+
+                const isMonitor = typeName.toLowerCase().includes('monitor');
+                const pcSpecs = document.querySelectorAll('.pc-only');
+                const monitorSpecs = document.querySelectorAll('.monitor-only');
+
+                if (isMonitor) {
+                    pcSpecs.forEach(el => el.classList.add('hidden'));
+                    monitorSpecs.forEach(el => el.classList.remove('hidden'));
+                } else {
+                    pcSpecs.forEach(el => el.classList.remove('hidden'));
+                    monitorSpecs.forEach(el => el.classList.add('hidden'));
+                }
+
+                let modelDisplay = asset.model || '';
+                if (asset.manufacturer && !modelDisplay.toLowerCase().startsWith(asset.manufacturer.toLowerCase())) {
+                    modelDisplay = asset.manufacturer + ' ' + modelDisplay;
+                }
+                document.getElementById('spec-model').innerText = modelDisplay;
                 let custom = asset.custom_attributes || {};
-                document.getElementById('spec-cpu').innerText = custom.cpu || 'Padrão Corpoativo';
-                document.getElementById('spec-ram').innerText = custom.ram || '8GB Base';
-                document.getElementById('spec-storage').innerText = custom.storage || 'SSD 256GB';
+                
+                if (isMonitor) {
+                    document.getElementById('spec-inches').innerText = custom.inches ? custom.inches + '"' : 'N/A';
+                } else {
+                    document.getElementById('spec-cpu').innerText = custom.cpu || 'Padrão Corporativo';
+                    document.getElementById('spec-ram').innerText = custom.ram || '8GB Base';
+                    document.getElementById('spec-storage').innerText = custom.storage || 'SSD 256GB';
+                }
 
                 let histHtml = '';
                 data.history.forEach(h => {
@@ -2163,17 +2621,52 @@
         }
 
         function openSpecsModal() {
-            // Pré-preenche o modal com os valores atuais exibidos no painel
-            document.getElementById('edit-serial').value       = document.getElementById('spec-serial').innerText.replace('-','').trim();
-            document.getElementById('edit-cpu').value          = document.getElementById('spec-cpu').innerText.replace('Padrão Corpoativo','').trim();
-            document.getElementById('edit-ram').value          = document.getElementById('spec-ram').innerText.replace('8GB Base','').trim();
-            document.getElementById('edit-storage').value      = document.getElementById('spec-storage').innerText.replace('SSD 256GB','').trim();
+            const typeLabel = document.getElementById('panel-asset-type-label').innerText.toLowerCase();
+            const isMonitor = typeLabel.includes('monitor');
 
-            // Manufacturer + Model ficam no spec-model como "Fabricante Modelo"
+            // Toggle visibility in the Modal
+            const modalPcFields = document.querySelectorAll('#editSpecsModalOverlay .pc-only');
+            const modalMonitorFields = document.querySelectorAll('#editSpecsModalOverlay .monitor-only');
+
+            // Manufacturer + Model Setup
+            populateEditManufacturers();
             const fullModel = document.getElementById('spec-model').innerText.trim();
-            const parts = fullModel.split(' ');
-            document.getElementById('edit-manufacturer').value = parts[0] || '';
-            document.getElementById('edit-model').value        = parts.slice(1).join(' ') || '';
+            
+            // Try to find the matching model in globalStandardModels
+            let matchedModel = globalStandardModels.find(m => (m.manufacturer + ' ' + m.name) === fullModel);
+            if (!matchedModel) {
+                // Try simpler split if not direct match
+                const parts = fullModel.split(' ');
+                const mfg = parts[0] || '';
+                const mdlName = parts.slice(1).join(' ') || '';
+                matchedModel = globalStandardModels.find(m => m.manufacturer === mfg && m.name === mdlName);
+            }
+
+            if (matchedModel) {
+                document.getElementById('edit-manufacturer').value = matchedModel.manufacturer;
+                filterEditSpecsModels();
+                document.getElementById('edit-model').value = matchedModel.id;
+            } else {
+                // If not found, set to Outro/Desconhecido
+                document.getElementById('edit-manufacturer').value = 'Outro';
+                filterEditSpecsModels();
+                document.getElementById('edit-model').value = 'Desconhecido';
+            }
+
+            if (isMonitor) {
+                modalPcFields.forEach(el => el.classList.add('hidden'));
+                modalMonitorFields.forEach(el => el.classList.remove('hidden'));
+                
+                const inchesText = document.getElementById('spec-inches').innerText;
+                document.getElementById('edit-inches').value = inchesText.replace('"', '').replace('N/A', '').trim();
+            } else {
+                modalPcFields.forEach(el => el.classList.remove('hidden'));
+                modalMonitorFields.forEach(el => el.classList.add('hidden'));
+
+                document.getElementById('edit-cpu').value     = document.getElementById('spec-cpu').innerText.replace('Padrão Corporativo','').replace('-', '').trim();
+                document.getElementById('edit-ram').value     = document.getElementById('spec-ram').innerText.replace('8GB Base','').replace('-', '').trim();
+                document.getElementById('edit-storage').value = document.getElementById('spec-storage').innerText.replace('SSD 256GB','').replace('-', '').trim();
+            }
 
             document.getElementById('editSpecsModalOverlay').style.display = 'flex';
         }
@@ -2184,15 +2677,34 @@
 
         async function saveSpecs() {
             const assetId = document.getElementById('current-detail-id').value;
-            const payload = {
-                manufacturer:      document.getElementById('edit-manufacturer').value.trim(),
-                model:             document.getElementById('edit-model').value.trim(),
-                serial_number:     document.getElementById('edit-serial').value.trim(),
-                custom_attributes: {
+            const typeLabel = document.getElementById('panel-asset-type-label').innerText.toLowerCase();
+            const isMonitor = typeLabel.includes('monitor');
+            let customAttrs = {};
+            if (isMonitor) {
+                customAttrs = {
+                    inches: document.getElementById('edit-inches').value.trim()
+                };
+            } else {
+                customAttrs = {
                     cpu:     document.getElementById('edit-cpu').value.trim(),
                     ram:     document.getElementById('edit-ram').value.trim(),
                     storage: document.getElementById('edit-storage').value.trim()
-                }
+                };
+            }
+
+            const mfg = document.getElementById('edit-manufacturer').value;
+            const modelIdOrValue = document.getElementById('edit-model').value;
+            let finalModelName = modelIdOrValue;
+
+            if (mfg !== 'Outro' && modelIdOrValue !== 'Desconhecido') {
+                const sel = globalStandardModels.find(m => m.id == modelIdOrValue);
+                if (sel) finalModelName = sel.name;
+            }
+
+            const payload = {
+                manufacturer:      mfg,
+                model:             finalModelName,
+                custom_attributes: customAttrs
             };
 
             try {
@@ -2232,15 +2744,15 @@
                     customAttr = {
                         cpu: selModel.cpu,
                         ram: selModel.ram,
-                        storage: selModel.storage
+                        storage: selModel.storage,
+                        inches: selModel.inches
                     };
                 }
             }
 
             const payload = {
                 type_id: parseInt(document.getElementById('add-type').value),
-                asset_tag: document.getElementById('add-tag').value,
-                serial_number: null,
+                asset_tag: document.getElementById('add-tag').value.trim(),
                 manufacturer: manuf,
                 model: finalModelName,
                 status: document.getElementById('add-status').value, // In_Stock, Assigned, Maintenance
@@ -2248,6 +2760,11 @@
                 purchase_date: null,
                 custom_attributes: customAttr
             };
+
+            if (!payload.asset_tag) {
+                 alert('Patrimônio é obrigatório.');
+                 return;
+            }
 
             await fetch('/api/assets', {
                 method: 'POST',

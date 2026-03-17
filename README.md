@@ -1,14 +1,13 @@
-# 🚀 Quanta CMDB - Portal de Gestão ITAM
+# 🚀 ITAM CMDB - Portal de Gestão de Ativos
 
 **Versão Documentada:** 1.0 (MVP Oficial)
-**Empresa:** Quanta Previdência
 **Data de Apresentação:** Março / 2026
 
 ---
 
 ## 📌 1. Visão Geral da Solução
 
-O **Quanta CMDB** (*Configuration Management Database*) é uma ferramenta proprietária e sob medida desenvolvida para solucionar gargalos de auditoria, controle de estoque e rastreabilidade dos equipamentos e ativos de Tecnologia da Informação (ITAM).
+O **ITAM CMDB** (*Configuration Management Database*) é uma ferramenta proprietária e sob medida desenvolvida para solucionar gargalos de auditoria, controle de estoque e rastreabilidade dos equipamentos e ativos de Tecnologia da Informação (ITAM).
 
 O sistema proporciona à equipe de T.I. uma gestão ultra fluida, rápida e sem burocracias pesadas, ao mesmo tempo em que **garante automação de compliance** atrelando 100% de mudanças nos hardwares diretamente a aberturas automáticas de chamados na ferramenta oficial de Tickets corporativa: o **Atlassian Jira Service Desk**.
 
@@ -18,8 +17,8 @@ O sistema proporciona à equipe de T.I. uma gestão ultra fluida, rápida e sem 
 
 A aplicação foi montada sobre um ecossistema incrivelmente leve para rodar de forma local ou num servidor interno isolado, garantindo facilidade extrema no deploy e manutenção mínima:
 
-*   **Front-end:** Vanilla HTML, CSS (`style block` customizado do zero baseado no *Tailwind* e Design System Oficial Quanta) e Vanilla JavaScript sem pesados frameworks externos.
-*   **Back-end:** Node.js puro e pacote primário HTTP integrado por Express.
+*   **Front-end:** HTML, CSS (Design System customizado do zero) e Vanilla JavaScript sem frameworks externos pesados.
+*   **Back-end:** Node.js com Express.
 *   **Banco de Dados:** PostgreSQL (`core_cmdb`) garantindo solidez nas chaves relacionais (Foreign Keys) para garantir que peças do histórico não se percam caso máquinas mudem infinitamente de dono.
 *   **Mensageria e Integração:** Jira REST API V3 (Service Desk API).
 
@@ -50,7 +49,7 @@ Exclusão Lógica. Máquinas obsoletas, devolvidas para consertos perdidos com a
 
 Qualquer ação dentro da plataforma está baseada na "Auditoria de Fechamento de Ciclo". No mundo corporativo, se a T.I entregou um mouse... existe a necessidade de haver um chamado documentando quando, por que, de quem era, para quem foi. 
 
-Essa burocracia custosa sumiu com a arquitetura do Quanta CMDB. 
+Essa burocracia custosa sumiu com a arquitetura do ITAM CMDB. 
 
 **Sistema de "Intenção em Fila" (Offline-First para Chamados)**:
 Quando você movimenta ou cria uma máquina no portal, a instrução não vai parar o app (loading infinito) rodando uma API demorada lá nos EUA na Atlassian.
@@ -64,9 +63,9 @@ Dessa forma, a T.I realiza 45 movimentações pesadas fisicamente na sala de inf
 ---
 
 ## 🎨 5. Identidade Visual 
-Toda a plataforma foi construída sem utilizar bibliotecas visuais engessadas, permitindo a adoção minuciosa dos tokens da Marca Quanta Previdência:
-- Adoção das variantes do "Azul Quanta" para menu, profundidade, realce dos campos em modal e sombreamentos (`rgba(27, 95, 140, 0.15)`).
-- Destaques, botões e marcações com os tons "Verde Quanta" e links e interações pulsantes da marca oficial, elevando a percepção real de uma robusta ferramenta da matriz.
+Toda a plataforma foi construída sem utilizar bibliotecas visuais engessadas, permitindo a adoção minuciosa de tokens de design modernos:
+- Adoção de variantes cromáticas para menu, profundidade, realce dos campos em modal e sombreamentos.
+- Destaques, botões e marcações com tons vibrantes, elevando a percepção real de uma robusta ferramenta corporativa.
 
 ---
 
